@@ -1,0 +1,19 @@
+# Node.js
+node_modules/
+dist/
+npm-debug.log
+.env
+.DS_Store
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# IDE
+.vscode/
+.idea/
+*.swp

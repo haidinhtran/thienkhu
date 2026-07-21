@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CultivationApi.Application/CultivationApi.Application.csproj" />
+  <Project Path="CultivationApi.Domain/CultivationApi.Domain.csproj" />
+  <Project Path="CultivationApi.Infrastructure/CultivationApi.Infrastructure.csproj" />
+  <Project Path="CultivationApi.WebApi/CultivationApi.WebApi.csproj" />
+</Solution>

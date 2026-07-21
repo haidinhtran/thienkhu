@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: cultivation_db
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: dbpassword
+      POSTGRES_DB: cultivation_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - cultivation_network
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: cultivation_cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - cultivation_network
+
+networks:
+  cultivation_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
