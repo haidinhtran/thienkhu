@@ -18,6 +18,7 @@ flowchart LR
 
 ### Phase 1: Context & Search Gathering
 
+- Always response to user in Vietnamese but use English in documentation and implementation.
 - Read existing design documents in `docs/`:
   - [docs/game_design_document.md](docs/game_design_document.md)
   - [docs/user_flow.md](docs/user_flow.md)
