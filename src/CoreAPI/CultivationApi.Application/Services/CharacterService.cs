@@ -11,10 +11,12 @@ namespace CultivationApi.Application.Services;
 public class CharacterService : ICharacterService
 {
     private readonly IAppDbContext _dbContext;
+    private readonly IGameConfigProvider _configProvider;
 
-    public CharacterService(IAppDbContext dbContext)
+    public CharacterService(IAppDbContext dbContext, IGameConfigProvider configProvider)
     {
         _dbContext = dbContext;
+        _configProvider = configProvider;
     }
 
     public async Task<CharacterProfileDto> GetOrCreateProfileAsync(string discordId, string serverId, string username, CancellationToken ct = default)
@@ -169,6 +171,99 @@ public class CharacterService : ICharacterService
             Message = $"Gained {qiToAdd} Qi.",
             CurrentQi = character.CurrentQi,
             GainedQi = qiToAdd
+        };
+    }
+
+    public async Task<AscendResultDto> AscendAsync(string discordId, string serverId, CancellationToken ct = default)
+    {
+        var character = await _dbContext.Characters
+            .Include(c => c.Inventory)
+            .FirstOrDefaultAsync(c => c.DiscordId == discordId && c.ServerId == serverId, ct);
+
+        if (character == null)
+        {
+            return new AscendResultDto { Success = false, Message = "Character not found." };
+        }
+
+        var currentConfig = _configProvider.GetLevelConfig(character.NumericLevel);
+        if (currentConfig == null)
+        {
+            return new AscendResultDto { Success = false, Message = "Already at max level." };
+        }
+
+        if (character.CurrentQi < currentConfig.RequiredQi)
+        {
+            return new AscendResultDto { Success = false, Message = "Not enough Qi to ascend." };
+        }
+
+        // Check required items
+        if (!string.IsNullOrEmpty(currentConfig.RequiredBreakthroughItemId) && currentConfig.RequiredBreakthroughItemQuantity > 0)
+        {
+            if (character.Inventory == null)
+            {
+                return new AscendResultDto { Success = false, Message = "Missing required breakthrough items." };
+            }
+
+            var item = character.Inventory.Items.FirstOrDefault(i => i.ItemId == currentConfig.RequiredBreakthroughItemId);
+            if (item == null || item.Quantity < currentConfig.RequiredBreakthroughItemQuantity)
+            {
+                return new AscendResultDto { Success = false, Message = "Missing required breakthrough items." };
+            }
+
+            // Consume item
+            item.Quantity -= currentConfig.RequiredBreakthroughItemQuantity;
+            if (item.Quantity == 0)
+            {
+                character.Inventory.Items.Remove(item);
+            }
+            // Force EF to detect change
+            character.Inventory.Items = new List<InventoryItem>(character.Inventory.Items);
+        }
+
+        // Apply ascension
+        int oldLevel = character.NumericLevel;
+        character.NumericLevel += 1;
+        
+        // Reset or deduct Qi? MVP: Reset Qi. Or deduct? Let's deduct to save overflow.
+        character.CurrentQi -= currentConfig.RequiredQi;
+
+        // Apply new stats
+        var nextConfig = _configProvider.GetLevelConfig(character.NumericLevel);
+        if (nextConfig != null)
+        {
+            character.BaseStats.Strength = nextConfig.BaseStats.Strength;
+            character.BaseStats.Agility = nextConfig.BaseStats.Agility;
+            character.BaseStats.Luck = nextConfig.BaseStats.Luck;
+            character.BaseStats.Health = nextConfig.BaseStats.Health;
+            character.BaseStats.Mana = nextConfig.BaseStats.Mana;
+        }
+
+        var auditLog = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            CharacterId = character.Id,
+            ActionType = AuditLogTypes.Breakthrough,
+            Details = JsonDocument.Parse(JsonSerializer.Serialize(new { OldLevel = oldLevel, NewLevel = character.NumericLevel })),
+            CreatedAt = DateTime.UtcNow
+        };
+        _dbContext.AuditLogs.Add(auditLog);
+
+        try
+        {
+            await _dbContext.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new DomainException("Concurrency error. Please try ascending again.");
+        }
+
+        return new AscendResultDto
+        {
+            Success = true,
+            Message = "Ascension successful!",
+            OldLevel = oldLevel,
+            NewLevel = character.NumericLevel,
+            NewBaseStats = character.BaseStats
         };
     }
 }

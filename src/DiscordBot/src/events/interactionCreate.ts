@@ -20,7 +20,7 @@ export const interactionCreateEvent = {
           await handleCultivateInteraction(interaction, traceId);
         }
       } else if (interaction.isStringSelectMenu()) {
-        if (interaction.customId === 'cultivate_explore_location') {
+        if (interaction.customId.startsWith('cultivate_')) {
           await handleCultivateInteraction(interaction, traceId);
         }
       }

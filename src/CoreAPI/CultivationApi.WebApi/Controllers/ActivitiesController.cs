@@ -50,4 +50,28 @@ public class ActivitiesController : ControllerBase
         var resultDto = await _activitiesService.SubmitExplorationChoiceAsync(request, ct);
         return Ok(resultDto);
     }
+
+    [HttpPost("secret-domain")]
+    public async Task<ActionResult<CultivationApi.Domain.DTOs.SecretDomainResultDto>> EnterSecretDomain(
+        [FromBody] CultivationApi.Domain.DTOs.SecretDomainRequestDto request,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.DiscordId) || string.IsNullOrWhiteSpace(request.ServerId) || string.IsNullOrWhiteSpace(request.DomainId))
+        {
+            return BadRequest(new ProblemDetails 
+            { 
+                Title = "Validation Error", 
+                Detail = "discordId, serverId, and domainId are required." 
+            });
+        }
+
+        var resultDto = await _activitiesService.EnterSecretDomainAsync(request, ct);
+        
+        if (!resultDto.Success)
+        {
+            return BadRequest(resultDto);
+        }
+
+        return Ok(resultDto);
+    }
 }

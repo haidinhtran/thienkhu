@@ -103,6 +103,33 @@ Grants passive Qi to a character based on server configuration limits and cooldo
   }
   ```
 
+**POST `/api/v1/characters/ascend`**
+Attempts to ascend a character to the next level by consuming required Qi and Items.
+
+- **Request Body:**
+  ```json
+  {
+    "discordId": "string",
+    "serverId": "string"
+  }
+  ```
+- **Response (`200 OK` or `400 Bad Request` if requirements not met):**
+  ```json
+  {
+    "success": true,
+    "message": "string",
+    "oldLevel": "int",
+    "newLevel": "int",
+    "newBaseStats": {
+      "strength": "int",
+      "agility": "int",
+      "luck": "int",
+      "health": "int",
+      "mana": "int"
+    }
+  }
+  ```
+
 ### Servers API
 
 **GET `/api/v1/servers/{serverId}/config`**
@@ -168,5 +195,34 @@ Submits the user's choice for an ongoing exploration event. Resolves the event, 
     "narrative": "string",
     "qiReward": "long",
     "spiritStonesReward": "int"
+  }
+  ```
+
+**POST `/api/v1/activities/secret-domain`**
+Initiates a combat challenge in a specific Secret Domain to farm items and Spirit Stones.
+
+- **Request Body:**
+  ```json
+  {
+    "discordId": "string",
+    "serverId": "string",
+    "domainId": "string"
+  }
+  ```
+- **Response (`200 OK` or `400 Bad Request`):**
+  ```json
+  {
+    "success": true,
+    "message": "string",
+    "isVictory": true,
+    "battleLog": ["string"],
+    "rewardSpiritStones": "int",
+    "rewardItems": [
+      {
+        "itemId": "string",
+        "quantity": "int",
+        "itemType": "string"
+      }
+    ]
   }
   ```

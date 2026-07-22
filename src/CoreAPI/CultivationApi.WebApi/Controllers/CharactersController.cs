@@ -61,4 +61,28 @@ public class CharactersController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPost("ascend")]
+    public async Task<ActionResult<AscendResultDto>> Ascend(
+        [FromBody] AscendRequestDto request,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.DiscordId) || string.IsNullOrWhiteSpace(request.ServerId))
+        {
+            return BadRequest(new ProblemDetails 
+            { 
+                Title = "Validation Error", 
+                Detail = "discordId and serverId are required." 
+            });
+        }
+
+        var result = await _characterService.AscendAsync(request.DiscordId, request.ServerId, ct);
+        
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }

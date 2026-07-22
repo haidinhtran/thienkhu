@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, ButtonInteraction, StringSelectMenuInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, ButtonInteraction, StringSelectMenuInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, EmbedBuilder } from 'discord.js';
 import { embedBuilder } from '../utils/embedBuilder.js';
 import { logger } from '../utils/logger.js';
 import { apiClient } from '../api/CultivationApiClient.js';
@@ -41,7 +41,15 @@ export const handleCultivateInteraction = async (interaction: ChatInputCommandIn
         const profile = await apiClient.getCharacterProfile(discordId, serverId, username);
         const profileEmbed = embedBuilder.buildProfileEmbed(profile);
 
-        await interaction.editReply({ embeds: [profileEmbed], components: [] });
+        const profileRow = new ActionRowBuilder<ButtonBuilder>()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('cultivate_ascend')
+              .setLabel('Ascend (Breakthrough)')
+              .setStyle(ButtonStyle.Success)
+          );
+
+        await interaction.editReply({ embeds: [profileEmbed], components: [profileRow] });
       } catch (error) {
         logger.error(`Error fetching profile: ${error}`, { traceId });
         try {
@@ -87,6 +95,45 @@ export const handleCultivateInteraction = async (interaction: ChatInputCommandIn
           logger.warn(`Failed to send error message to Discord (Interaction may be expired). Trace: ${traceId}`);
         }
       }
+    } else if (action === 'ascend') {
+      try {
+        const discordId = interaction.user.id;
+        const serverId = interaction.guildId || 'DM';
+
+        const result = await apiClient.ascend(discordId, serverId);
+        const embed = embedBuilder.buildAscendResultEmbed(result);
+        
+        await interaction.editReply({ embeds: [embed], components: [] });
+      } catch (error) {
+        logger.error(`Error ascending: ${error}`, { traceId });
+        try {
+          await interaction.editReply({ content: `Ascension failed: ${(error as Error).message}`, components: [] });
+        } catch (e) {
+          logger.warn(`Failed to send error message to Discord (Interaction may be expired). Trace: ${traceId}`);
+        }
+      }
+    } else if (action === 'domain') {
+      const embed = new EmbedBuilder()
+        .setColor('DarkRed')
+        .setTitle('Secret Domains')
+        .setDescription('Select a secret domain to challenge. Warning: Combat here is perilous!');
+
+      const select = new StringSelectMenuBuilder()
+        .setCustomId('cultivate_domain_location')
+        .setPlaceholder('Select a secret domain...')
+        .addOptions(
+          new StringSelectMenuOptionBuilder()
+            .setLabel('Goblin Cave (Lv. 1+)')
+            .setDescription('A starter domain filled with weak goblins.')
+            .setValue('goblin_cave'),
+          new StringSelectMenuOptionBuilder()
+            .setLabel('Azure Cloud Mountain (Lv. 4+)')
+            .setDescription('A dangerous trial on the mountain peaks.')
+            .setValue('azure_mountain')
+        );
+
+      const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+      await interaction.editReply({ embeds: [embed], components: [row] });
     } else {
       await interaction.editReply({ content: `You clicked ${action}. This feature is coming soon!`, components: [] });
     }
@@ -120,6 +167,24 @@ export const handleCultivateInteraction = async (interaction: ChatInputCommandIn
         logger.error(`Error starting exploration: ${error}`, { traceId });
         try {
           await interaction.editReply({ content: `Exploration failed: ${(error as Error).message}`, components: [] });
+        } catch (e) {
+          logger.warn(`Failed to send error message to Discord (Interaction may be expired). Trace: ${traceId}`);
+        }
+      }
+    } else if (interaction.customId === 'cultivate_domain_location') {
+      const domainId = interaction.values[0];
+      try {
+        const discordId = interaction.user.id;
+        const serverId = interaction.guildId || 'DM';
+
+        const result = await apiClient.enterSecretDomain(discordId, serverId, domainId);
+        const embed = embedBuilder.buildSecretDomainResultEmbed(result);
+
+        await interaction.editReply({ embeds: [embed], components: [] });
+      } catch (error) {
+        logger.error(`Error entering domain: ${error}`, { traceId });
+        try {
+          await interaction.editReply({ content: `Domain run failed: ${(error as Error).message}`, components: [] });
         } catch (e) {
           logger.warn(`Failed to send error message to Discord (Interaction may be expired). Trace: ${traceId}`);
         }

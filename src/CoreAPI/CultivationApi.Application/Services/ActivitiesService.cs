@@ -11,11 +11,13 @@ namespace CultivationApi.Application.Services;
 public class ActivitiesService : IActivitiesService
 {
     private readonly IAppDbContext _dbContext;
+    private readonly IGameConfigProvider _configProvider;
     private readonly Random _random;
 
-    public ActivitiesService(IAppDbContext dbContext)
+    public ActivitiesService(IAppDbContext dbContext, IGameConfigProvider configProvider)
     {
         _dbContext = dbContext;
+        _configProvider = configProvider;
         _random = new Random();
     }
 
@@ -169,5 +171,122 @@ public class ActivitiesService : IActivitiesService
             QiReward = qiReward,
             SpiritStonesReward = stoneReward
         };
+    }
+
+    public async Task<CultivationApi.Domain.DTOs.SecretDomainResultDto> EnterSecretDomainAsync(CultivationApi.Domain.DTOs.SecretDomainRequestDto request, CancellationToken ct = default)
+    {
+        var character = await _dbContext.Characters
+            .Include(c => c.Inventory)
+            .FirstOrDefaultAsync(c => c.DiscordId == request.DiscordId && c.ServerId == request.ServerId, ct);
+
+        if (character == null)
+            throw new DomainException("Character not found.");
+
+        if (character.CurrentState != CharacterStates.Idle)
+            throw new DomainException($"Character is currently {character.CurrentState}. You must be IDLE to enter a Secret Domain.");
+
+        var domainConfig = _configProvider.GetSecretDomainConfig(request.DomainId);
+        if (domainConfig == null)
+            throw new DomainException("Secret Domain not found.");
+
+        if (character.NumericLevel < domainConfig.RequiredLevel)
+            throw new DomainException($"You must be at least level {domainConfig.RequiredLevel} to enter this domain.");
+
+        // Simulate combat (MVP: compare stats and add some RNG)
+        int playerPower = character.BaseStats.Strength + character.BaseStats.Agility + (character.BaseStats.Health / 10);
+        int bossPower = domainConfig.BossStats.Strength + domainConfig.BossStats.Agility + (domainConfig.BossStats.Health / 10);
+        
+        // Add Luck factor
+        playerPower += _random.Next(0, character.BaseStats.Luck);
+        bossPower += _random.Next(0, 10); // Boss has fixed random variance
+
+        bool isVictory = playerPower >= bossPower;
+        
+        var battleLog = new List<string>
+        {
+            $"You entered {domainConfig.Name}.",
+            $"You encountered the domain boss! (Boss Power: {bossPower}, Your Power: {playerPower})"
+        };
+
+        var resultDto = new CultivationApi.Domain.DTOs.SecretDomainResultDto
+        {
+            Success = true,
+            IsVictory = isVictory,
+            BattleLog = battleLog
+        };
+
+        if (isVictory)
+        {
+            battleLog.Add("You emerged victorious!");
+            
+            // Give Rewards
+            character.SpiritStones += domainConfig.RewardSpiritStones;
+            resultDto.RewardSpiritStones = domainConfig.RewardSpiritStones;
+
+            if (character.Inventory == null)
+            {
+                character.Inventory = new Inventory { CharacterId = character.Id };
+                _dbContext.Inventories.Add(character.Inventory);
+            }
+
+            foreach (var reward in domainConfig.RewardItems)
+            {
+                if (_random.NextDouble() <= reward.DropRate)
+                {
+                    var existingItem = character.Inventory.Items.FirstOrDefault(i => i.ItemId == reward.ItemId);
+                    if (existingItem != null)
+                    {
+                        existingItem.Quantity += reward.Quantity;
+                    }
+                    else
+                    {
+                        character.Inventory.Items.Add(new InventoryItem
+                        {
+                            ItemId = reward.ItemId,
+                            Quantity = reward.Quantity,
+                            ItemType = reward.ItemType
+                        });
+                    }
+
+                    resultDto.RewardItems.Add(new CultivationApi.Domain.DTOs.RewardItemDto
+                    {
+                        ItemId = reward.ItemId,
+                        Quantity = reward.Quantity,
+                        ItemType = reward.ItemType
+                    });
+                    
+                    battleLog.Add($"Looted: {reward.Quantity}x {reward.ItemId}");
+                }
+            }
+
+            // Force EF core to track JSONB list modification
+            character.Inventory.Items = new List<InventoryItem>(character.Inventory.Items);
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                CharacterId = character.Id,
+                ActionType = "SECRET_DOMAIN_VICTORY",
+                Details = JsonDocument.Parse(JsonSerializer.Serialize(new { DomainId = domainConfig.DomainId, Rewards = resultDto.RewardItems })),
+                CreatedAt = DateTime.UtcNow
+            };
+            _dbContext.AuditLogs.Add(auditLog);
+        }
+        else
+        {
+            battleLog.Add("You were defeated and forced to retreat...");
+            // Optionally add penalty here (e.g. lose Qi or items)
+        }
+
+        try
+        {
+            await _dbContext.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new DomainException("Concurrency error. Please try again.");
+        }
+
+        return resultDto;
     }
 }

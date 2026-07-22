@@ -24,8 +24,12 @@ flowchart TD
     E --> G([Button: Exploration]):::action
     E --> H([Button: Secret Domain]):::action
 
-    %% Profile Inspection
+    %% Profile Inspection & Ascension
     F --> F1[Display Level, Realm Name, Stats & Inventory Embed]:::action
+    F1 --> F2([Button: Ascend / Breakthrough]):::action
+    F2 --> F3{Meets Qi & Item Reqs?}:::condition
+    F3 -- Yes --> F4[Consume Items, Reset Qi, Increase Level & Stats]:::action
+    F3 -- No --> F5[Display Failure Embed]:::action
 
     %% Exploration Activity
     G --> G1[Select Location]:::action

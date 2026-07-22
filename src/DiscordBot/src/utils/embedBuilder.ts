@@ -60,5 +60,42 @@ export const embedBuilder = {
     }
 
     return embed;
+  },
+
+  buildAscendResultEmbed: (resultData: any) => {
+    const embed = new EmbedBuilder()
+      .setColor(resultData.success ? 'Gold' : 'Red')
+      .setTitle(resultData.success ? 'Ascension Successful!' : 'Ascension Failed')
+      .setDescription(resultData.message);
+
+    if (resultData.success && resultData.newBaseStats) {
+      embed.addFields(
+        { name: 'Level Up', value: `Lv. ${resultData.oldLevel} -> Lv. ${resultData.newLevel}`, inline: false },
+        { name: 'Strength', value: `${resultData.newBaseStats.strength}`, inline: true },
+        { name: 'Agility', value: `${resultData.newBaseStats.agility}`, inline: true },
+        { name: 'Health', value: `${resultData.newBaseStats.health}`, inline: true }
+      );
+    }
+    return embed;
+  },
+
+  buildSecretDomainResultEmbed: (resultData: any) => {
+    const embed = new EmbedBuilder()
+      .setColor(resultData.isVictory ? 'Orange' : 'DarkButNotBlack')
+      .setTitle(resultData.isVictory ? 'Secret Domain Cleared' : 'Defeated in Secret Domain')
+      .setDescription(resultData.battleLog.join('\n'));
+
+    if (resultData.isVictory) {
+      let rewardText = `Spirit Stones: +${resultData.rewardSpiritStones}\n`;
+      if (resultData.rewardItems && resultData.rewardItems.length > 0) {
+        resultData.rewardItems.forEach((i: any) => {
+          rewardText += `${i.itemId} x${i.quantity}\n`;
+        });
+      } else {
+        rewardText += "No items dropped.";
+      }
+      embed.addFields({ name: 'Rewards', value: rewardText });
+    }
+    return embed;
   }
 };

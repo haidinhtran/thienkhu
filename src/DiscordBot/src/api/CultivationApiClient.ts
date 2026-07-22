@@ -26,6 +26,29 @@ export interface GainQiResultDto {
   gainedQi: number;
 }
 
+export interface AscendResultDto {
+  success: boolean;
+  message: string;
+  oldLevel: number;
+  newLevel: number;
+  newBaseStats?: any;
+}
+
+export interface RewardItemDto {
+  itemId: string;
+  quantity: number;
+  itemType: string;
+}
+
+export interface SecretDomainResultDto {
+  success: boolean;
+  message: string;
+  isVictory: boolean;
+  battleLog: string[];
+  rewardSpiritStones: number;
+  rewardItems: RewardItemDto[];
+}
+
 export class CultivationApiClient {
   private readonly baseUrl: string;
 
@@ -148,6 +171,46 @@ export class CultivationApiClient {
       return await response.json() as ExplorationResultDto;
     } catch (error) {
       logger.error('Failed to submit exploration choice', { error });
+      throw error;
+    }
+  }
+
+  public async ascend(discordId: string, serverId: string): Promise<AscendResultDto> {
+    const url = new URL(`${this.baseUrl}/characters/ascend`);
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ discordId, serverId })
+      });
+
+      if (!response.ok && response.status !== 400) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      return await response.json() as AscendResultDto;
+    } catch (error) {
+      logger.error('Failed to ascend', { error });
+      throw error;
+    }
+  }
+
+  public async enterSecretDomain(discordId: string, serverId: string, domainId: string): Promise<SecretDomainResultDto> {
+    const url = new URL(`${this.baseUrl}/activities/secret-domain`);
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ discordId, serverId, domainId })
+      });
+
+      if (!response.ok && response.status !== 400) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      return await response.json() as SecretDomainResultDto;
+    } catch (error) {
+      logger.error('Failed to enter secret domain', { error });
       throw error;
     }
   }
