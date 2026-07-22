@@ -51,7 +51,7 @@ erDiagram
     AUDIT_LOG {
         uuid id PK
         uuid character_id FK
-        string action_type "EXP_GAIN, ITEM_CONSUME, BREAKTHROUGH"
+        string action_type "EXP_GAIN, EXPLORATION_REWARD, ITEM_CONSUME, BREAKTHROUGH"
         jsonb details "Context data"
         timestamp created_at
     }

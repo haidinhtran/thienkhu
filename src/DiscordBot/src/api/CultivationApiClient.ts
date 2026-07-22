@@ -113,6 +113,67 @@ export class CultivationApiClient {
       throw error;
     }
   }
+
+  public async startExploration(discordId: string, serverId: string, locationId: string): Promise<ExplorationEventDto> {
+    const url = new URL(`${this.baseUrl}/activities/explore`);
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ discordId, serverId, locationId })
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+      return await response.json() as ExplorationEventDto;
+    } catch (error) {
+      logger.error('Failed to start exploration', { error });
+      throw error;
+    }
+  }
+
+  public async submitExplorationChoice(discordId: string, serverId: string, choiceId: string, eventId: string = ""): Promise<ExplorationResultDto> {
+    const url = new URL(`${this.baseUrl}/activities/explore/choice`);
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ discordId, serverId, choiceId, eventId })
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+      return await response.json() as ExplorationResultDto;
+    } catch (error) {
+      logger.error('Failed to submit exploration choice', { error });
+      throw error;
+    }
+  }
+}
+
+export interface ExplorationChoiceDto {
+  choiceId: string;
+  label: string;
+  style: string;
+}
+
+export interface ExplorationEventDto {
+  eventId: string;
+  eventType: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  choices: ExplorationChoiceDto[];
+}
+
+export interface ExplorationResultDto {
+  success: boolean;
+  title: string;
+  narrative: string;
+  qiReward: number;
+  spiritStonesReward: number;
 }
 
 export const apiClient = new CultivationApiClient();

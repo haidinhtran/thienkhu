@@ -3,6 +3,8 @@ using CultivationApi.Domain.DTOs;
 using CultivationApi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using CultivationApi.Domain.Constants;
+using CultivationApi.Domain.Exceptions;
 
 namespace CultivationApi.Application.Services;
 
@@ -146,7 +148,7 @@ public class CharacterService : ICharacterService
         {
             Id = Guid.NewGuid(),
             CharacterId = character.Id,
-            ActionType = "EXP_GAIN",
+            ActionType = AuditLogTypes.ExpGain,
             Details = JsonDocument.Parse(JsonSerializer.Serialize(new { Source = "ChatToEarn", Amount = qiToAdd })),
             CreatedAt = DateTime.UtcNow
         };
@@ -158,7 +160,7 @@ public class CharacterService : ICharacterService
         }
         catch (DbUpdateConcurrencyException)
         {
-            return new GainQiResultDto { Success = false, Message = "Concurrency error. Try again." };
+            throw new DomainException("Concurrency error. Action conflicts with another request. Please try again.");
         }
 
         return new GainQiResultDto 

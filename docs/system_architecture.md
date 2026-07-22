@@ -116,3 +116,57 @@ Retrieves the server's configuration, including chat-to-earn settings. Auto-crea
     "isActive": true
   }
   ```
+
+### Activities API
+
+**POST `/api/v1/activities/explore`**
+Initiates an exploration event for a user in a specific location. Updates the character's state to `IN_EXPLORATION`.
+
+- **Request Body:**
+  ```json
+  {
+    "discordId": "string",
+    "serverId": "string",
+    "locationId": "string"
+  }
+  ```
+- **Response (`200 OK`):**
+  ```json
+  {
+    "eventId": "string",
+    "eventType": "string",
+    "title": "string",
+    "description": "string",
+    "imageUrl": "string",
+    "choices": [
+      {
+        "choiceId": "string",
+        "label": "string",
+        "style": "string"
+      }
+    ]
+  }
+  ```
+
+**POST `/api/v1/activities/explore/choice`**
+Submits the user's choice for an ongoing exploration event. Resolves the event, distributes rewards/penalties, and resets character state to `IDLE`.
+
+- **Request Body:**
+  ```json
+  {
+    "discordId": "string",
+    "serverId": "string",
+    "eventId": "string",
+    "choiceId": "string"
+  }
+  ```
+- **Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "title": "string",
+    "narrative": "string",
+    "qiReward": "long",
+    "spiritStonesReward": "int"
+  }
+  ```

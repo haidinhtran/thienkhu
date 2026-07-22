@@ -13,6 +13,7 @@ builder.Services.AddDbContext<CultivationApi.Infrastructure.Data.AppDbContext>(o
 
 builder.Services.AddScoped<CultivationApi.Application.Interfaces.IAppDbContext>(provider => provider.GetRequiredService<CultivationApi.Infrastructure.Data.AppDbContext>());
 builder.Services.AddScoped<CultivationApi.Application.Services.ICharacterService, CultivationApi.Application.Services.CharacterService>();
+builder.Services.AddScoped<CultivationApi.Application.Services.IActivitiesService, CultivationApi.Application.Services.ActivitiesService>();
 
 var app = builder.Build();
 

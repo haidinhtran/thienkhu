@@ -33,6 +33,12 @@ public class GlobalExceptionHandler : IExceptionHandler
                 .GroupBy(x => x.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(x => x.ErrorMessage));
         }
+        else if (exception is CultivationApi.Domain.Exceptions.DomainException domainException)
+        {
+            problemDetails.Status = StatusCodes.Status400BadRequest;
+            problemDetails.Title = "Domain Rule Violation";
+            problemDetails.Detail = domainException.Message;
+        }
 
         problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
 
