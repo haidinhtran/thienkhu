@@ -53,3 +53,31 @@ flowchart TD
     DotNetAPI -- JSON Response --> DiscordBot
     DiscordBot -- Render Embeds & Buttons --> User
 ```
+
+## 3. API Contracts
+
+The core REST API exposes endpoints for the Discord Bot to consume. 
+
+### Characters API
+
+**GET `/api/v1/characters/profile`**
+Retrieves the character profile for a user. If the character, server config, or discord user does not exist, it will be automatically created.
+
+- **Query Parameters:**
+  - `discordId` (string, required): The Discord Snowflake ID of the user.
+  - `serverId` (string, required): The Discord Snowflake ID of the server.
+  - `username` (string, required): The current Discord username.
+- **Response (`200 OK`):**
+  ```json
+  {
+    "discordId": "string",
+    "serverId": "string",
+    "username": "string",
+    "level": "int",
+    "realmName": "string",
+    "currentQi": "int",
+    "dailyQiLimit": "int",
+    "spiritStones": "int",
+    "currentState": "string"
+  }
+  ```

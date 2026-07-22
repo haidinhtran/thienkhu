@@ -34,6 +34,8 @@ public class GlobalExceptionHandler : IExceptionHandler
                 .ToDictionary(g => g.Key, g => g.Select(x => x.ErrorMessage));
         }
 
+        problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
+
         httpContext.Response.StatusCode = problemDetails.Status.Value;
         await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 

@@ -27,6 +27,18 @@ services:
     networks:
       - cultivation_network
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: cultivation_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: haidinhtran@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: SecretPassword123
+    ports:
+      - "5050:80"
+    restart: unless-stopped
+    networks:
+      - cultivation_network
+
 networks:
   cultivation_network:
     driver: bridge

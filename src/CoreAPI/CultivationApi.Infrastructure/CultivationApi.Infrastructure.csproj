@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CultivationApi.Domain\CultivationApi.Domain.csproj" />
+    <ProjectReference Include="..\CultivationApi.Application\CultivationApi.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

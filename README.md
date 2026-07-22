@@ -26,12 +26,14 @@ Start the PostgreSQL and Redis containers in the background:
 ```bash
 docker-compose up -d
 ```
+> **Note:** The `docker-compose.yml` also includes a `pgadmin` container accessible at `http://localhost:5050`.
 
 ### 2. Setup and Run Backend (.NET API)
 Navigate to the API folder, restore dependencies, and run the server:
 ```bash
 cd src/CoreAPI
 dotnet build CultivationApi.slnx
+dotnet ef database update --project CultivationApi.Infrastructure --startup-project CultivationApi.WebApi
 dotnet run --project CultivationApi.WebApi/CultivationApi.WebApi.csproj
 ```
 
