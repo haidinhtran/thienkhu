@@ -81,3 +81,38 @@ Retrieves the character profile for a user. If the character, server config, or 
     "currentState": "string"
   }
   ```
+
+**POST `/api/v1/characters/gain-qi`**
+Grants passive Qi to a character based on server configuration limits and cooldowns.
+
+- **Request Body:**
+  ```json
+  {
+    "discordId": "string",
+    "serverId": "string",
+    "username": "string"
+  }
+  ```
+- **Response (`200 OK` or `400 Bad Request` if cooldown/limit hit):**
+  ```json
+  {
+    "success": true,
+    "message": "string",
+    "currentQi": "long",
+    "gainedQi": "long"
+  }
+  ```
+
+### Servers API
+
+**GET `/api/v1/servers/{serverId}/config`**
+Retrieves the server's configuration, including chat-to-earn settings. Auto-creates a default config if one doesn't exist.
+
+- **Response (`200 OK`):**
+  ```json
+  {
+    "serverId": "string",
+    "chatToEarnChannels": ["string"],
+    "isActive": true
+  }
+  ```
