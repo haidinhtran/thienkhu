@@ -42,6 +42,9 @@ erDiagram
         string server_id PK "Discord Server Snowflake ID"
         jsonb realm_names "JSONB: Level to Title Mapping"
         int daily_qi_limit "Customizable daily cap for Chat-to-Earn"
+        jsonb chat_to_earn_channels "JSONB: List of allowed channel IDs"
+        int qi_per_message "Amount of Qi granted per message"
+        int message_cooldown_seconds "Cooldown between eligible messages"
         boolean is_active
     }
 

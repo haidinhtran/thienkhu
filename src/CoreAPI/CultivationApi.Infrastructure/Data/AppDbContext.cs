@@ -43,6 +43,18 @@ public class AppDbContext : DbContext, IAppDbContext
                       c => JsonSerializer.Serialize(c, (JsonSerializerOptions?)null).GetHashCode(),
                       c => JsonSerializer.Deserialize<Dictionary<int, string>>(JsonSerializer.Serialize(c, (JsonSerializerOptions?)null), (JsonSerializerOptions?)null)!
                   ));
+            
+            entity.Property(e => e.ChatToEarnChannels)
+                  .HasColumnType("jsonb")
+                  .HasConversion(
+                      v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                      v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
+                  )
+                  .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                      (c1, c2) => JsonSerializer.Serialize(c1, (JsonSerializerOptions?)null) == JsonSerializer.Serialize(c2, (JsonSerializerOptions?)null),
+                      c => JsonSerializer.Serialize(c, (JsonSerializerOptions?)null).GetHashCode(),
+                      c => JsonSerializer.Deserialize<List<string>>(JsonSerializer.Serialize(c, (JsonSerializerOptions?)null), (JsonSerializerOptions?)null)!
+                  ));
         });
 
         modelBuilder.Entity<Character>(entity =>

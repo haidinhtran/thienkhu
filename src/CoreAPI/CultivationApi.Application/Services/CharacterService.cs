@@ -2,6 +2,7 @@ using CultivationApi.Application.Interfaces;
 using CultivationApi.Domain.DTOs;
 using CultivationApi.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace CultivationApi.Application.Services;
 
@@ -82,6 +83,90 @@ public class CharacterService : ICharacterService
             DailyQiLimit = server.DailyQiLimit,
             SpiritStones = character.SpiritStones,
             CurrentState = character.CurrentState
+        };
+    }
+
+    public async Task<GainQiResultDto> AddPassiveQiAsync(string discordId, string serverId, string username, CancellationToken ct = default)
+    {
+        var character = await _dbContext.Characters
+            .Include(c => c.ServerConfig)
+            .FirstOrDefaultAsync(c => c.DiscordId == discordId && c.ServerId == serverId, ct);
+            
+        if (character == null)
+        {
+            await GetOrCreateProfileAsync(discordId, serverId, username, ct);
+            character = await _dbContext.Characters
+                .Include(c => c.ServerConfig)
+                .FirstAsync(c => c.DiscordId == discordId && c.ServerId == serverId, ct);
+        }
+
+        var serverConfig = character.ServerConfig;
+        if (serverConfig == null || !serverConfig.IsActive)
+        {
+            return new GainQiResultDto { Success = false, Message = "Server is inactive." };
+        }
+        
+        if (character.LastMeditated.HasValue && character.LastMeditated.Value.Date < DateTime.UtcNow.Date)
+        {
+            character.DailyQiAccumulated = 0;
+        }
+
+        if (character.LastMeditated.HasValue && 
+            (DateTime.UtcNow - character.LastMeditated.Value).TotalSeconds < serverConfig.MessageCooldownSeconds)
+        {
+            return new GainQiResultDto 
+            { 
+                Success = false, 
+                Message = "Cooldown active.",
+                CurrentQi = character.CurrentQi
+            };
+        }
+
+        if (character.DailyQiAccumulated >= serverConfig.DailyQiLimit)
+        {
+            return new GainQiResultDto 
+            { 
+                Success = false, 
+                Message = "Daily Qi limit reached.",
+                CurrentQi = character.CurrentQi
+            };
+        }
+
+        long qiToAdd = serverConfig.QiPerMessage;
+        if (character.DailyQiAccumulated + qiToAdd > serverConfig.DailyQiLimit)
+        {
+            qiToAdd = serverConfig.DailyQiLimit - character.DailyQiAccumulated;
+        }
+
+        character.CurrentQi += qiToAdd;
+        character.DailyQiAccumulated += qiToAdd;
+        character.LastMeditated = DateTime.UtcNow;
+
+        var auditLog = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            CharacterId = character.Id,
+            ActionType = "EXP_GAIN",
+            Details = JsonDocument.Parse(JsonSerializer.Serialize(new { Source = "ChatToEarn", Amount = qiToAdd })),
+            CreatedAt = DateTime.UtcNow
+        };
+        _dbContext.AuditLogs.Add(auditLog);
+
+        try
+        {
+            await _dbContext.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return new GainQiResultDto { Success = false, Message = "Concurrency error. Try again." };
+        }
+
+        return new GainQiResultDto 
+        { 
+            Success = true, 
+            Message = $"Gained {qiToAdd} Qi.",
+            CurrentQi = character.CurrentQi,
+            GainedQi = qiToAdd
         };
     }
 }

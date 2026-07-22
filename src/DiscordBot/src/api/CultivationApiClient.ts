@@ -13,6 +13,19 @@ export interface CharacterProfileDto {
   currentState: string;
 }
 
+export interface ServerConfigDto {
+  serverId: string;
+  chatToEarnChannels: string[];
+  isActive: boolean;
+}
+
+export interface GainQiResultDto {
+  success: boolean;
+  message: string;
+  currentQi: number;
+  gainedQi: number;
+}
+
 export class CultivationApiClient {
   private readonly baseUrl: string;
 
@@ -47,6 +60,56 @@ export class CultivationApiClient {
       return data as CharacterProfileDto;
     } catch (error) {
       logger.error('Failed to fetch character profile', { error });
+      throw error;
+    }
+  }
+
+  public async getServerConfig(serverId: string): Promise<ServerConfigDto> {
+    const url = new URL(`${this.baseUrl}/servers/${serverId}/config`);
+    
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data as ServerConfigDto;
+    } catch (error) {
+      logger.error('Failed to fetch server config', { error });
+      throw error;
+    }
+  }
+
+  public async gainQi(discordId: string, serverId: string, username: string): Promise<GainQiResultDto> {
+    const url = new URL(`${this.baseUrl}/characters/gain-qi`);
+    
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ discordId, serverId, username })
+      });
+
+      // We expect 400 or 200 for business logic results (cooldowns vs success)
+      if (!response.ok && response.status !== 400) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data as GainQiResultDto;
+    } catch (error) {
+      logger.error('Failed to gain Qi', { error });
       throw error;
     }
   }

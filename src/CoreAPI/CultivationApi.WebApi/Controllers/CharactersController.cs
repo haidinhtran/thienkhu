@@ -34,4 +34,31 @@ public class CharactersController : ControllerBase
         var profile = await _characterService.GetOrCreateProfileAsync(discordId, serverId, username, ct);
         return Ok(profile);
     }
+
+    [HttpPost("gain-qi")]
+    public async Task<ActionResult<GainQiResultDto>> GainQi(
+        [FromBody] GainQiRequestDto request,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.DiscordId) || string.IsNullOrWhiteSpace(request.ServerId) || string.IsNullOrWhiteSpace(request.Username))
+        {
+            return BadRequest(new ProblemDetails 
+            { 
+                Title = "Validation Error", 
+                Detail = "discordId, serverId, and username are required." 
+            });
+        }
+
+        var result = await _characterService.AddPassiveQiAsync(request.DiscordId, request.ServerId, request.Username, ct);
+        
+        if (!result.Success)
+        {
+            // Even if failed due to cooldown, it's a valid request but failed business logic.
+            // Returning 200 with Success=false is fine for this game loop, or 400 Bad Request.
+            // Let's return 400 for business validation failure.
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }

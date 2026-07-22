@@ -22,11 +22,15 @@ Based on the core documentation (`game_design_document.md`, `system_architecture
 1. **Backend - Server Config Integration:** Ensure `ServerConfig` is properly utilized in the database to govern the `daily_qi_limit` per server.
 2. **Backend - Gain Qi Endpoint:** Create a new REST endpoint (e.g., `POST /api/v1/characters/gain-qi`) and a corresponding DTO.
 3. **Backend - Domain Logic:** Implement `AddPassiveQiAsync` in `CharacterService`. This must handle:
-   - Cooldown tracking (e.g., `last_meditated`).
+   - Cooldown tracking against `message_cooldown_seconds` (e.g., `last_meditated`).
    - Optimistic concurrency control (handling DB row versions).
-   - Daily limit capping.
+   - Dynamic `qi_per_message` addition and Daily limit capping.
    - Recording an `AuditLog` entry for `EXP_GAIN`.
-4. **Discord Bot - Message Listener:** Implement the `messageCreate` event handler in the bot. When a user sends a message, asynchronously ping the backend `gain-qi` endpoint without blocking the chat flow.
+4. **Discord Bot - Message Listener:** Implement the `messageCreate` event handler in the bot.
+   - Fetch allowed `chat_to_earn_channels` for the server.
+   - Fallback to the first accessible text channel if none are configured. Disable feature if no fallback is found.
+   - Check if message is in an allowed channel.
+   - When valid, asynchronously ping the backend `gain-qi` endpoint without blocking the chat flow.
 
 ## Phase 3: Active Grind - Exploration (Mocked Narrative)
 **Goal:** Implement the exploration loop. (Note: OpenAI integration is deferred. Responses will be mocked/static for now).

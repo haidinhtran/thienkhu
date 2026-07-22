@@ -4,7 +4,7 @@ import { logger } from './utils/logger.js';
 import { registerEvents } from './handlers/eventHandler.js';
 import { registerCommands } from './handlers/commandHandler.js';
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 async function bootstrap() {
   if (!env.DISCORD_TOKEN) {
