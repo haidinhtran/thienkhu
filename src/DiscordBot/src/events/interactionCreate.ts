@@ -1,4 +1,4 @@
-import { Events, Interaction } from 'discord.js';
+import { Events, Interaction, MessageFlags } from 'discord.js';
 import { logger } from '../utils/logger.js';
 import { embedBuilder } from '../utils/embedBuilder.js';
 import { handleCultivateInteraction } from '../controllers/cultivateController.js';
@@ -24,16 +24,31 @@ export const interactionCreateEvent = {
           await handleCultivateInteraction(interaction, traceId);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error handling interaction', { traceId, error });
       
-      const errorEmbed = embedBuilder.buildErrorEmbed('An unexpected error occurred.', traceId);
+      // Error 10062: Unknown Interaction (token expired)
+      if (error?.code === 10062) {
+        logger.warn(`Interaction token expired for trace: ${traceId}. Silently logging.`);
+        return;
+      }
+      
+      let errorMessage = 'An unexpected error occurred. Your session may have expired. Please run `/cultivate` again.';
+      if (error?.name === 'ApiBusinessError') {
+        errorMessage = error.message;
+      }
+      
+      const errorEmbed = embedBuilder.buildErrorEmbed(errorMessage, traceId);
       
       if (interaction.isRepliable()) {
-        if (interaction.deferred || interaction.replied) {
-          await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
-        } else {
-          await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+        try {
+          if (interaction.deferred || interaction.replied) {
+            await interaction.followUp({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
+          } else {
+            await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
+          }
+        } catch (followUpError) {
+          logger.error('Failed to send fallback error message', { traceId, followUpError });
         }
       }
     }

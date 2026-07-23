@@ -283,3 +283,16 @@ Initiates a combat challenge in a specific Secret Domain to farm items and Spiri
     ]
   }
   ```
+
+## 4. State Management & Error Handling
+
+### 4.1 Exploration State Soft-Lock Prevention (MVP)
+The MVP backend does not persist generated `ExplorationEvent` instances in the database (they are returned on the fly). This introduces a risk of soft-locking: if a user navigates away from the event embed, their character remains locked in the `IN_EXPLORATION` state with no way to retrieve the lost event.
+- **Frontend Mitigation:** The Discord Bot maintains an in-memory cache (`activeExplorations`) mapping `discordId` to their active `ExplorationEvent`. If the user clicks `[Exploration]` while still in the `IN_EXPLORATION` state, the bot seamlessly resumes the cached event.
+- **Backend Mitigation:** `StartExplorationAsync` is permitted to overwrite an existing `IN_EXPLORATION` state. If the bot restarts and the cache is lost, the user can safely generate a new event to clear the lock.
+
+### 4.2 API Error Mapping & Global Exception Handling
+The Discord bot delegates all business rules (stat requirements, state machine validations) to the backend API.
+1. **Backend Propagation:** When a rule is violated (e.g., trying to enter a Secret Domain while exploring), the backend throws a `DomainException`, which the Global Exception Handler (`GlobalExceptionHandler.cs`) translates into an HTTP 400 Bad Request with a `ProblemDetails` JSON body.
+2. **Frontend Translation:** The `CultivationApiClient` explicitly intercepts 400 Bad Request responses. If it detects a `Domain Rule Violation`, it throws a custom `ApiBusinessError`.
+3. **Global UX Handler:** The bot's global `interactionCreate` event listener catches `ApiBusinessError` and renders the specific business violation text directly to the user as an Ephemeral Embed, preventing generic "Unexpected error" masks while avoiding redundant `try-catch` blocks in controllers.

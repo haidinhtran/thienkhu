@@ -29,7 +29,7 @@ public class ActivitiesService : IActivitiesService
         if (character == null)
             throw new DomainException("Character not found.");
 
-        if (character.CurrentState != CharacterStates.Idle)
+        if (character.CurrentState != CharacterStates.Idle && character.CurrentState != CharacterStates.InExploration)
             throw new DomainException($"Character is currently {character.CurrentState}. You must be IDLE to explore.");
 
         character.CurrentState = CharacterStates.InExploration;

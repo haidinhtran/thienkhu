@@ -56,7 +56,8 @@ public class CharacterService : ICharacterService
             CurrentState = character.CurrentState,
             TargetQi = levelConfig?.RequiredQi ?? 0,
             RequiredBreakthroughItemId = levelConfig?.RequiredBreakthroughItemId,
-            RequiredBreakthroughItemQuantity = levelConfig?.RequiredBreakthroughItemQuantity ?? 0
+            RequiredBreakthroughItemQuantity = levelConfig?.RequiredBreakthroughItemQuantity ?? 0,
+            BaseStats = character.BaseStats
         };
     }
 

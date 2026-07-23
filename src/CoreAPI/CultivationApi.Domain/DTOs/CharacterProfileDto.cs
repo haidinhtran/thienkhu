@@ -1,3 +1,5 @@
+using CultivationApi.Domain.Entities;
+
 namespace CultivationApi.Domain.DTOs;
 
 public class CharacterProfileDto
@@ -14,4 +16,5 @@ public class CharacterProfileDto
     public long TargetQi { get; set; }
     public string? RequiredBreakthroughItemId { get; set; }
     public int RequiredBreakthroughItemQuantity { get; set; }
+    public BaseStats BaseStats { get; set; } = new();
 }

@@ -37,9 +37,22 @@ export const embedBuilder = {
         { name: 'Realm', value: `${profile.realmName} (Lv. ${profile.level})`, inline: true },
         { name: 'Qi (Chat limit)', value: `${profile.currentQi} / ${profile.dailyQiLimit}`, inline: true },
         { name: 'Spirit Stones', value: `${profile.spiritStones}`, inline: true },
-        { name: 'Status', value: `${profile.currentState}`, inline: false },
-        { name: 'Ascension Progress', value: `${profile.currentQi} / ${profile.targetQi} Qi\n\`${progressBar}\``, inline: false }
+        { name: 'Status', value: `${profile.currentState}`, inline: true }
       );
+
+    if (profile.baseStats) {
+      embed.addFields(
+        { name: 'Strength', value: `${profile.baseStats.strength}`, inline: true },
+        { name: 'Agility', value: `${profile.baseStats.agility}`, inline: true },
+        { name: 'Health', value: `${profile.baseStats.health}`, inline: true },
+        { name: 'Mana', value: `${profile.baseStats.mana}`, inline: true },
+        { name: 'Luck', value: `${profile.baseStats.luck}`, inline: true }
+      );
+    }
+
+    embed.addFields(
+      { name: 'Ascension Progress', value: `${profile.currentQi} / ${profile.targetQi} Qi\n\`${progressBar}\``, inline: false }
+    );
 
     if (profile.requiredBreakthroughItemId && profile.requiredBreakthroughItemQuantity > 0) {
       embed.addFields({ name: 'Required for Breakthrough', value: `${profile.requiredBreakthroughItemQuantity}x ${profile.requiredBreakthroughItemId}`, inline: false });

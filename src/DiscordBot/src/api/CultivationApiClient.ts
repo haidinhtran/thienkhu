@@ -1,6 +1,13 @@
 // Wrapper for .NET Core REST API
 import { logger } from '../utils/logger.js';
 
+export class ApiBusinessError extends Error {
+  constructor(message: string, public statusCode: number) {
+    super(message);
+    this.name = 'ApiBusinessError';
+  }
+}
+
 export interface CharacterProfileDto {
   discordId: string;
   serverId: string;
@@ -14,6 +21,13 @@ export interface CharacterProfileDto {
   targetQi: number;
   requiredBreakthroughItemId?: string;
   requiredBreakthroughItemQuantity: number;
+  baseStats: {
+    strength: number;
+    agility: number;
+    luck: number;
+    health: number;
+    mana: number;
+  };
 }
 
 export interface ServerConfigDto {
@@ -75,6 +89,23 @@ export interface InventoryDto {
 export class CultivationApiClient {
   private readonly baseUrl: string;
 
+  private async handleResponse(response: Response): Promise<void> {
+    if (!response.ok) {
+      const errorText = await response.text();
+      try {
+        if (response.status === 400) {
+          const problem = JSON.parse(errorText);
+          if (problem && problem.title === 'Domain Rule Violation' && problem.detail) {
+            throw new ApiBusinessError(problem.detail, response.status);
+          }
+        }
+      } catch (e) {
+        if (e instanceof ApiBusinessError) throw e;
+      }
+      throw new Error(`API Error: ${response.status} - ${errorText}`);
+    }
+  }
+
   constructor() {
     // Fallback to localhost if not set in .env
     this.baseUrl = process.env.API_BASE_URL || 'http://localhost:5116/api/v1';
@@ -101,10 +132,7 @@ export class CultivationApiClient {
         return null;
       }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
-      }
+      await this.handleResponse(response);
 
       const data = await response.json();
       return data as CharacterProfileDto;
@@ -123,10 +151,7 @@ export class CultivationApiClient {
         body: JSON.stringify({ discordId, serverId, username })
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
-      }
+      await this.handleResponse(response);
 
       return await response.json() as CharacterProfileDto;
     } catch (error) {
@@ -147,9 +172,7 @@ export class CultivationApiClient {
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
+      await this.handleResponse(response);
 
       const data = await response.json();
       return data as ServerConfigDto;
@@ -167,7 +190,7 @@ export class CultivationApiClient {
       const response = await fetch(url.toString(), {
         headers: { 'Accept': 'application/json' },
       });
-      if (!response.ok) throw new Error(`API Error: ${response.status}`);
+      await this.handleResponse(response);
       return await response.json() as InventoryDto;
     } catch (error) {
       logger.error('Failed to get inventory', { error });
@@ -207,9 +230,7 @@ export class CultivationApiClient {
       });
 
       // We expect 400 or 200 for business logic results (cooldowns vs success)
-      if (!response.ok && response.status !== 400) {
-        throw new Error(`API Error: ${response.status}`);
-      }
+      await this.handleResponse(response);
 
       const data = await response.json();
       return data as GainQiResultDto;
@@ -227,10 +248,7 @@ export class CultivationApiClient {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ discordId, serverId, locationId })
       });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
-      }
+      await this.handleResponse(response);
       return await response.json() as ExplorationEventDto;
     } catch (error) {
       logger.error('Failed to start exploration', { error });
@@ -246,10 +264,7 @@ export class CultivationApiClient {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ discordId, serverId, choiceId, eventId })
       });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
-      }
+      await this.handleResponse(response);
       return await response.json() as ExplorationResultDto;
     } catch (error) {
       logger.error('Failed to submit exploration choice', { error });
@@ -266,9 +281,7 @@ export class CultivationApiClient {
         body: JSON.stringify({ discordId, serverId })
       });
 
-      if (!response.ok && response.status !== 400) {
-        throw new Error(`API Error: ${response.status}`);
-      }
+      await this.handleResponse(response);
 
       return await response.json() as AscendResultDto;
     } catch (error) {
@@ -286,9 +299,7 @@ export class CultivationApiClient {
         body: JSON.stringify({ discordId, serverId, domainId })
       });
 
-      if (!response.ok && response.status !== 400) {
-        throw new Error(`API Error: ${response.status}`);
-      }
+      await this.handleResponse(response);
 
       return await response.json() as SecretDomainResultDto;
     } catch (error) {
