@@ -5,70 +5,70 @@
       "RequiredQi": 100,
       "RequiredBreakthroughItemId": null,
       "RequiredBreakthroughItemQuantity": 0,
-      "BaseStats": { "Strength": 15, "Agility": 15, "Luck": 7, "Health": 150, "Mana": 70 }
+      "BaseStats": { "Strength": 15, "Agility": 15, "Luck": 7, "Health": 150, "Mana": 70, "Insight": 10 }
     },
     {
       "Level": 2,
       "RequiredQi": 400,
       "RequiredBreakthroughItemId": null,
       "RequiredBreakthroughItemQuantity": 0,
-      "BaseStats": { "Strength": 20, "Agility": 20, "Luck": 9, "Health": 200, "Mana": 90 }
+      "BaseStats": { "Strength": 20, "Agility": 20, "Luck": 9, "Health": 200, "Mana": 90, "Insight": 12 }
     },
     {
       "Level": 3,
       "RequiredQi": 900,
       "RequiredBreakthroughItemId": "breakthrough_pill_1",
       "RequiredBreakthroughItemQuantity": 1,
-      "BaseStats": { "Strength": 25, "Agility": 25, "Luck": 11, "Health": 250, "Mana": 110 }
+      "BaseStats": { "Strength": 25, "Agility": 25, "Luck": 11, "Health": 250, "Mana": 110, "Insight": 15 }
     },
     {
       "Level": 4,
       "RequiredQi": 1600,
       "RequiredBreakthroughItemId": null,
       "RequiredBreakthroughItemQuantity": 0,
-      "BaseStats": { "Strength": 30, "Agility": 30, "Luck": 13, "Health": 300, "Mana": 130 }
+      "BaseStats": { "Strength": 30, "Agility": 30, "Luck": 13, "Health": 300, "Mana": 130, "Insight": 18 }
     },
     {
       "Level": 5,
       "RequiredQi": 2500,
       "RequiredBreakthroughItemId": null,
       "RequiredBreakthroughItemQuantity": 0,
-      "BaseStats": { "Strength": 35, "Agility": 35, "Luck": 15, "Health": 350, "Mana": 150 }
+      "BaseStats": { "Strength": 35, "Agility": 35, "Luck": 15, "Health": 350, "Mana": 150, "Insight": 22 }
     },
     {
       "Level": 6,
       "RequiredQi": 3600,
       "RequiredBreakthroughItemId": "breakthrough_pill_2",
       "RequiredBreakthroughItemQuantity": 1,
-      "BaseStats": { "Strength": 40, "Agility": 40, "Luck": 17, "Health": 400, "Mana": 170 }
+      "BaseStats": { "Strength": 40, "Agility": 40, "Luck": 17, "Health": 400, "Mana": 170, "Insight": 26 }
     },
     {
       "Level": 7,
       "RequiredQi": 4900,
       "RequiredBreakthroughItemId": null,
       "RequiredBreakthroughItemQuantity": 0,
-      "BaseStats": { "Strength": 45, "Agility": 45, "Luck": 19, "Health": 450, "Mana": 190 }
+      "BaseStats": { "Strength": 45, "Agility": 45, "Luck": 19, "Health": 450, "Mana": 190, "Insight": 30 }
     },
     {
       "Level": 8,
       "RequiredQi": 6400,
       "RequiredBreakthroughItemId": null,
       "RequiredBreakthroughItemQuantity": 0,
-      "BaseStats": { "Strength": 50, "Agility": 50, "Luck": 21, "Health": 500, "Mana": 210 }
+      "BaseStats": { "Strength": 50, "Agility": 50, "Luck": 21, "Health": 500, "Mana": 210, "Insight": 35 }
     },
     {
       "Level": 9,
       "RequiredQi": 8100,
       "RequiredBreakthroughItemId": "breakthrough_pill_3",
       "RequiredBreakthroughItemQuantity": 1,
-      "BaseStats": { "Strength": 55, "Agility": 55, "Luck": 23, "Health": 550, "Mana": 230 }
+      "BaseStats": { "Strength": 55, "Agility": 55, "Luck": 23, "Health": 550, "Mana": 230, "Insight": 40 }
     },
     {
       "Level": 10,
       "RequiredQi": 10000,
       "RequiredBreakthroughItemId": null,
       "RequiredBreakthroughItemQuantity": 0,
-      "BaseStats": { "Strength": 60, "Agility": 60, "Luck": 25, "Health": 600, "Mana": 250 }
+      "BaseStats": { "Strength": 60, "Agility": 60, "Luck": 25, "Health": 600, "Mana": 250, "Insight": 45 }
     }
   ],
   "SecretDomains": [

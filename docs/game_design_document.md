@@ -12,7 +12,12 @@ This document outlines the core loop and mechanics for the Minimum Viable Produc
 
 The primary gameplay loop consists of gathering resources and spending them to ascend:
 
-1. **Passive Grind (Chat-to-Earn):** Players earn Qi (Experience Points) passively by chatting on the Discord server. Experience is granted based on configurable server settings, including specific allowed channels (with fallback logic), dynamic Qi gains per message, message cooldowns (e.g., every 60 seconds), and a daily Qi accumulation cap.
+1. **Passive Grind (Chat-to-Earn):** Players earn Qi (Experience Points) passively by chatting on the Discord server. Experience is granted dynamically based on the player's **Insight (Ngộ tính)** attribute and configurable server settings (`MinQiPerMessage`, `MaxQiPerMessage`, `InsightMultiplier`), guarded by message cooldowns (e.g., every 60 seconds) and a daily Qi accumulation cap. Gain details are kept subtle/hidden to encourage player discovery and stat progression strategy.
+   - **Qi Calculation Formula:**
+     $$\text{UpperLimit} = \text{MinQiPerMessage} + \lfloor \text{Insight} \times \text{InsightMultiplier} \rfloor$$
+     $$\text{MaxAllowed} = \min(\text{UpperLimit}, \text{MaxQiPerMessage})$$
+     $$\text{QiEarned} = \text{Random}(\text{MinQiPerMessage}, \text{MaxAllowed})$$
+     $$\text{ActualQiEarned} = \min(\text{QiEarned}, \text{DailyQiLimit} - \text{DailyQiAccumulated})$$
 2. **Active Grind (Activities):** Players use the `/tutien` menu to access activities like Exploration and Secret Domains to earn Spirit Stones, gear, and breakthrough materials.
 3. **Ascension:** Players consume accrued Qi and specific items to break through to the next level or realm.
 

@@ -78,7 +78,15 @@ Retrieves the character profile for a user. If the character, server config, or 
     "currentQi": "int",
     "dailyQiLimit": "int",
     "spiritStones": "int",
-    "currentState": "string"
+    "currentState": "string",
+    "baseStats": {
+      "strength": "int",
+      "agility": "int",
+      "luck": "int",
+      "health": "int",
+      "mana": "int",
+      "insight": "int"
+    }
   }
   ```
 
@@ -97,7 +105,7 @@ Creates a new character profile.
   Same as `GET /api/v1/characters/profile`
 
 **POST `/api/v1/characters/gain-qi`**
-Grants passive Qi to a character based on server configuration limits and cooldowns.
+Grants passive Qi to a character based on server configuration limits, cooldowns, and the character's Insight stat.
 
 - **Request Body:**
   ```json
@@ -139,7 +147,8 @@ Attempts to ascend a character to the next level by consuming required Qi and It
       "agility": "int",
       "luck": "int",
       "health": "int",
-      "mana": "int"
+      "mana": "int",
+      "insight": "int"
     }
   }
   ```
@@ -147,13 +156,16 @@ Attempts to ascend a character to the next level by consuming required Qi and It
 ### Servers API
 
 **GET `/api/v1/servers/{serverId}/config`**
-Retrieves the server's configuration, including chat-to-earn settings. Auto-creates a default config if one doesn't exist.
+Retrieves the server's configuration, including chat-to-earn settings and Insight formulas. Auto-creates a default config if one doesn't exist.
 
 - **Response (`200 OK`):**
   ```json
   {
     "serverId": "string",
     "chatToEarnChannels": ["string"],
+    "minQiPerMessage": "int",
+    "maxQiPerMessage": "int",
+    "insightMultiplier": "double",
     "isActive": true
   }
   ```

@@ -113,3 +113,30 @@ Based on the core documentation (`game_design_document.md`, `system_architecture
 - `[x]` **Docs:** Update `user_flow.md` to reflect the new Onboarding flow and Inventory.
 - `[x]` **Docs:** Update `system_architecture.md` to document the JSON GameConfig provider and new API endpoints.
 - `[x]` **Docs:** Update `game_design_document.md` to explicitly list all game content and data (Realms, Domains, Items, Story mocks) to serve as the absolute single source of truth.
+
+---
+
+## Phase 6: Dynamic QiPerMessage & Insight (Ngộ tính) Stat System
+
+**Goal:** Transform fixed `QiPerMessage` into a dynamic random value influenced by player **Insight (Ngộ tính)** stat while preventing Power Creep via configurable `ServerConfig` limits.
+
+### 1. Domain & Entities
+- `[x]` **Backend:** Add `Insight` (default 10) to `BaseStats` class on `Character.cs` and `BaseStatsConfig` on `GameConfigs.cs`.
+- `[x]` **Backend:** Update `ServerConfig.cs` to remove old `QiPerMessage` and add `MinQiPerMessage` (default 10), `MaxQiPerMessage` (default 100), `InsightMultiplier` (default 1.0).
+
+### 2. Application & Progression Logic
+- `[x]` **Backend:** Refactor `GainQiFromMessageAsync` in `CharacterService.cs` to calculate dynamic Qi using the clean formula:
+  $$\text{UpperLimit} = \text{MinQiPerMessage} + \lfloor \text{Insight} \times \text{InsightMultiplier} \rfloor$$
+  $$\text{MaxAllowed} = \min(\text{UpperLimit}, \text{MaxQiPerMessage})$$
+  $$\text{QiEarned} = \text{Random}(\text{MinQiPerMessage}, \text{MaxAllowed})$$
+  $$\text{QiEarned} = \min(\text{QiEarned}, \text{DailyQiLimit} - \text{DailyQiAccumulated})$$
+- `[x]` **Backend:** Update `game_data.json` to assign scaling `Insight` stat values per Realm Level (Level 1: 10, Level 2: 12, etc.).
+- `[x]` **Backend:** Update `AscendRealmAsync` and character creation in `CharacterService.cs` to handle `Insight` stat properly.
+
+### 3. Database Migration
+- `[x]` **Backend:** Generate EF Core Migration `AddInsightAndServerConfigQiFormula` (removes `QiPerMessage` column, adds `MinQiPerMessage`, `MaxQiPerMessage`, `InsightMultiplier`).
+
+### 4. Presentation & Documentation
+- `[x]` **Discord Bot:** Keep Qi gain notifications subtle/standard on Discord UI while logging detailed Qi calculation in server logs (hidden mechanic for player discovery).
+- `[x]` **Docs:** Update `database_schema.md`, `game_design_document.md`, and `implementation_plan.md`.
+
