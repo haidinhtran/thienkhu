@@ -31,8 +31,41 @@ public class CharactersController : ControllerBase
             });
         }
 
-        var profile = await _characterService.GetOrCreateProfileAsync(discordId, serverId, username, ct);
+        var profile = await _characterService.GetProfileAsync(discordId, serverId, username, ct);
+        if (profile == null)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Title = "Character Not Found",
+                Detail = "Please use /cultivate and select Begin Journey to create a character."
+            });
+        }
         return Ok(profile);
+    }
+
+    [HttpPost("create")]
+    public async Task<ActionResult<CharacterProfileDto>> CreateProfile(
+        [FromBody] CreateCharacterRequestDto request,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.DiscordId) || string.IsNullOrWhiteSpace(request.ServerId) || string.IsNullOrWhiteSpace(request.Username))
+        {
+            return BadRequest(new ProblemDetails 
+            { 
+                Title = "Validation Error", 
+                Detail = "discordId, serverId, and username are required." 
+            });
+        }
+        
+        try
+        {
+            var profile = await _characterService.CreateCharacterAsync(request.DiscordId, request.ServerId, request.Username, ct);
+            return Ok(profile);
+        }
+        catch (CultivationApi.Domain.Exceptions.DomainException ex)
+        {
+            return BadRequest(new ProblemDetails { Title = "Domain Error", Detail = ex.Message });
+        }
     }
 
     [HttpPost("gain-qi")]

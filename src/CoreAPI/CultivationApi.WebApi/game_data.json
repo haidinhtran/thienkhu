@@ -1,0 +1,97 @@
+{
+  "LevelConfigs": [
+    {
+      "Level": 1,
+      "RequiredQi": 100,
+      "RequiredBreakthroughItemId": null,
+      "RequiredBreakthroughItemQuantity": 0,
+      "BaseStats": { "Strength": 15, "Agility": 15, "Luck": 7, "Health": 150, "Mana": 70 }
+    },
+    {
+      "Level": 2,
+      "RequiredQi": 400,
+      "RequiredBreakthroughItemId": null,
+      "RequiredBreakthroughItemQuantity": 0,
+      "BaseStats": { "Strength": 20, "Agility": 20, "Luck": 9, "Health": 200, "Mana": 90 }
+    },
+    {
+      "Level": 3,
+      "RequiredQi": 900,
+      "RequiredBreakthroughItemId": "breakthrough_pill_1",
+      "RequiredBreakthroughItemQuantity": 1,
+      "BaseStats": { "Strength": 25, "Agility": 25, "Luck": 11, "Health": 250, "Mana": 110 }
+    },
+    {
+      "Level": 4,
+      "RequiredQi": 1600,
+      "RequiredBreakthroughItemId": null,
+      "RequiredBreakthroughItemQuantity": 0,
+      "BaseStats": { "Strength": 30, "Agility": 30, "Luck": 13, "Health": 300, "Mana": 130 }
+    },
+    {
+      "Level": 5,
+      "RequiredQi": 2500,
+      "RequiredBreakthroughItemId": null,
+      "RequiredBreakthroughItemQuantity": 0,
+      "BaseStats": { "Strength": 35, "Agility": 35, "Luck": 15, "Health": 350, "Mana": 150 }
+    },
+    {
+      "Level": 6,
+      "RequiredQi": 3600,
+      "RequiredBreakthroughItemId": "breakthrough_pill_2",
+      "RequiredBreakthroughItemQuantity": 1,
+      "BaseStats": { "Strength": 40, "Agility": 40, "Luck": 17, "Health": 400, "Mana": 170 }
+    },
+    {
+      "Level": 7,
+      "RequiredQi": 4900,
+      "RequiredBreakthroughItemId": null,
+      "RequiredBreakthroughItemQuantity": 0,
+      "BaseStats": { "Strength": 45, "Agility": 45, "Luck": 19, "Health": 450, "Mana": 190 }
+    },
+    {
+      "Level": 8,
+      "RequiredQi": 6400,
+      "RequiredBreakthroughItemId": null,
+      "RequiredBreakthroughItemQuantity": 0,
+      "BaseStats": { "Strength": 50, "Agility": 50, "Luck": 21, "Health": 500, "Mana": 210 }
+    },
+    {
+      "Level": 9,
+      "RequiredQi": 8100,
+      "RequiredBreakthroughItemId": "breakthrough_pill_3",
+      "RequiredBreakthroughItemQuantity": 1,
+      "BaseStats": { "Strength": 55, "Agility": 55, "Luck": 23, "Health": 550, "Mana": 230 }
+    },
+    {
+      "Level": 10,
+      "RequiredQi": 10000,
+      "RequiredBreakthroughItemId": null,
+      "RequiredBreakthroughItemQuantity": 0,
+      "BaseStats": { "Strength": 60, "Agility": 60, "Luck": 25, "Health": 600, "Mana": 250 }
+    }
+  ],
+  "SecretDomains": [
+    {
+      "DomainId": "goblin_cave",
+      "Name": "Goblin Cave",
+      "RequiredLevel": 1,
+      "RewardSpiritStones": 50,
+      "BossStats": { "Strength": 12, "Agility": 10, "Luck": 5, "Health": 120, "Mana": 0 },
+      "RewardItems": [
+        { "ItemId": "breakthrough_pill_1", "Quantity": 1, "ItemType": "Consumable", "DropRate": 0.5 }
+      ]
+    },
+    {
+      "DomainId": "azure_mountain",
+      "Name": "Azure Cloud Mountain",
+      "RequiredLevel": 4,
+      "RewardSpiritStones": 200,
+      "BossStats": { "Strength": 35, "Agility": 25, "Luck": 10, "Health": 400, "Mana": 100 },
+      "RewardItems": [
+        { "ItemId": "breakthrough_pill_1", "Quantity": 2, "ItemType": "Consumable", "DropRate": 0.8 },
+        { "ItemId": "spirit_herb", "Quantity": 5, "ItemType": "Material", "DropRate": 1.0 }
+      ]
+    }
+  ]
+}

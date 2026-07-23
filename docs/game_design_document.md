@@ -22,3 +22,23 @@ The primary gameplay loop consists of gathering resources and spending them to a
   - _Event 1 (Story):_ AI-generated "Choice Matters" events influenced by the player's Luck stat. The AI handles narrative variety to prevent repetitive outcomes, providing rewards or penalties based on the player's decisions.
   - _Event 2 (Combat):_ PvE encounters against NPCs, monsters, or elite entities.
 - **Secret Domains:** Challenging instances that players enter to farm specific resources, including skills, equipment, Spirit Stones, and pills required for advancement.
+
+## 4. Hardcoded Data (MVP Phase 5)
+
+All game configuration is currently managed via `game_data.json` inside the `.NET API`.
+
+**Realms:**
+- Level 1-3: Qi Condensation
+- Level 4-6: Foundation Establishment
+- Level 7-9: Golden Core
+- Level 10: Nascent Soul
+
+**Secret Domains:**
+1. **Goblin Cave:** Required Level 1. Drops `breakthrough_pill_1`.
+2. **Azure Cloud Mountain:** Required Level 4. Drops `breakthrough_pill_1` and `spirit_herb`.
+
+**Items:**
+- `breakthrough_pill_1` (Consumable)
+- `breakthrough_pill_2` (Consumable)
+- `breakthrough_pill_3` (Consumable)
+- `spirit_herb` (Material)

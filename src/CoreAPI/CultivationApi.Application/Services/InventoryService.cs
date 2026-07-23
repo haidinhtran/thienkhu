@@ -97,4 +97,44 @@ public class InventoryService : IInventoryService
         var existingItem = inventory.Items.FirstOrDefault(i => i.ItemId == itemId);
         return existingItem != null && existingItem.Quantity >= quantity;
     }
+
+    public async Task<bool> EquipItemAsync(Guid characterId, string itemId, string slot)
+    {
+        var inventory = await GetOrCreateInventoryAsync(characterId);
+        
+        var item = inventory.Items.FirstOrDefault(i => i.ItemId == itemId);
+        if (item == null || item.Quantity <= 0 || item.ItemType != "Equipment")
+        {
+            return false;
+        }
+
+        if (slot.Equals("Weapon", StringComparison.OrdinalIgnoreCase))
+        {
+            inventory.EquippedGear.Weapon = itemId;
+        }
+        else if (slot.Equals("Chest", StringComparison.OrdinalIgnoreCase))
+        {
+            inventory.EquippedGear.Chest = itemId;
+        }
+        else if (slot.Equals("Artifact", StringComparison.OrdinalIgnoreCase))
+        {
+            inventory.EquippedGear.Artifact = itemId;
+        }
+        else
+        {
+            return false;
+        }
+
+        // Force EF Core tracking
+        inventory.EquippedGear = new EquippedGear
+        {
+            Head = inventory.EquippedGear.Head,
+            Chest = inventory.EquippedGear.Chest,
+            Weapon = inventory.EquippedGear.Weapon,
+            Artifact = inventory.EquippedGear.Artifact
+        };
+        
+        await _context.SaveChangesAsync(default);
+        return true;
+    }
 }

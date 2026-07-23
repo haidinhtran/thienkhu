@@ -4,7 +4,7 @@ namespace CultivationApi.Application.Interfaces;
 
 public interface IGameConfigProvider
 {
-    LevelConfig? GetLevelConfig(int level);
-    SecretDomainConfig? GetSecretDomainConfig(string domainId);
-    List<SecretDomainConfig> GetAllSecretDomains();
+    LevelConfig? GetLevelConfig(int level, string serverId);
+    SecretDomainConfig? GetSecretDomainConfig(string domainId, string serverId);
+    List<SecretDomainConfig> GetAllSecretDomains(string serverId);
 }

@@ -11,4 +11,7 @@ public class CharacterProfileDto
     public int DailyQiLimit { get; set; }
     public int SpiritStones { get; set; }
     public string CurrentState { get; set; } = "IDLE";
+    public long TargetQi { get; set; }
+    public string? RequiredBreakthroughItemId { get; set; }
+    public int RequiredBreakthroughItemQuantity { get; set; }
 }

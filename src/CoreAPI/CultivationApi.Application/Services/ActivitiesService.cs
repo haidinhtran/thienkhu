@@ -185,7 +185,7 @@ public class ActivitiesService : IActivitiesService
         if (character.CurrentState != CharacterStates.Idle)
             throw new DomainException($"Character is currently {character.CurrentState}. You must be IDLE to enter a Secret Domain.");
 
-        var domainConfig = _configProvider.GetSecretDomainConfig(request.DomainId);
+        var domainConfig = _configProvider.GetSecretDomainConfig(request.DomainId, request.ServerId);
         if (domainConfig == null)
             throw new DomainException("Secret Domain not found.");
 
@@ -194,6 +194,14 @@ public class ActivitiesService : IActivitiesService
 
         // Simulate combat (MVP: compare stats and add some RNG)
         int playerPower = character.BaseStats.Strength + character.BaseStats.Agility + (character.BaseStats.Health / 10);
+        
+        if (character.Inventory?.EquippedGear != null)
+        {
+            if (!string.IsNullOrEmpty(character.Inventory.EquippedGear.Weapon)) playerPower += 10;
+            if (!string.IsNullOrEmpty(character.Inventory.EquippedGear.Chest)) playerPower += 10;
+            if (!string.IsNullOrEmpty(character.Inventory.EquippedGear.Artifact)) playerPower += 5;
+        }
+
         int bossPower = domainConfig.BossStats.Strength + domainConfig.BossStats.Agility + (domainConfig.BossStats.Health / 10);
         
         // Add Luck factor

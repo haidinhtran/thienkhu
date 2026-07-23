@@ -14,8 +14,9 @@ flowchart TD
     A([User types /cultivate]):::start --> B{Character Exists?}:::condition
 
     %% Account Registration
-    B -- No --> C[Create Character Profile]:::action
-    C --> D[Assign Base Stats & Numeric Level 1]:::action
+    B -- No --> C[Display Welcome Embed]:::action
+    C --> C1([Button: Begin Journey]):::action
+    C1 --> D[Create Default Character Profile]:::action
     D --> E
 
     %% Main Menu Navigation
@@ -23,6 +24,7 @@ flowchart TD
     E --> F([Button: Profile]):::action
     E --> G([Button: Exploration]):::action
     E --> H([Button: Secret Domain]):::action
+    E --> I([Button: Inventory]):::action
 
     %% Profile Inspection & Ascension
     F --> F1[Display Level, Realm Name, Stats & Inventory Embed]:::action

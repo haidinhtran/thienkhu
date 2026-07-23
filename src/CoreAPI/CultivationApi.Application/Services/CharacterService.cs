@@ -19,9 +19,49 @@ public class CharacterService : ICharacterService
         _configProvider = configProvider;
     }
 
-    public async Task<CharacterProfileDto> GetOrCreateProfileAsync(string discordId, string serverId, string username, CancellationToken ct = default)
+    public async Task<CharacterProfileDto?> GetProfileAsync(string discordId, string serverId, string username, CancellationToken ct = default)
     {
-        // 1. Ensure DiscordUser exists
+        var character = await _dbContext.Characters
+            .Include(c => c.ServerConfig)
+            .FirstOrDefaultAsync(c => c.DiscordId == discordId && c.ServerId == serverId, ct);
+
+        if (character == null)
+        {
+            return null;
+        }
+
+        var user = await _dbContext.DiscordUsers.FirstOrDefaultAsync(u => u.DiscordId == discordId, ct);
+        if (user != null && user.Username != username)
+        {
+            user.Username = username;
+            await _dbContext.SaveChangesAsync(ct);
+        }
+
+        var realmName = character.ServerConfig?.RealmNames.TryGetValue(character.NumericLevel, out var customName) == true 
+            ? customName 
+            : "Qi Condensation";
+
+        var levelConfig = _configProvider.GetLevelConfig(character.NumericLevel, serverId);
+
+        return new CharacterProfileDto
+        {
+            DiscordId = character.DiscordId,
+            ServerId = character.ServerId,
+            Username = username,
+            Level = character.NumericLevel,
+            RealmName = realmName,
+            CurrentQi = character.CurrentQi,
+            DailyQiLimit = character.ServerConfig?.DailyQiLimit ?? 1000,
+            SpiritStones = character.SpiritStones,
+            CurrentState = character.CurrentState,
+            TargetQi = levelConfig?.RequiredQi ?? 0,
+            RequiredBreakthroughItemId = levelConfig?.RequiredBreakthroughItemId,
+            RequiredBreakthroughItemQuantity = levelConfig?.RequiredBreakthroughItemQuantity ?? 0
+        };
+    }
+
+    public async Task<CharacterProfileDto> CreateCharacterAsync(string discordId, string serverId, string username, CancellationToken ct = default)
+    {
         var user = await _dbContext.DiscordUsers.FirstOrDefaultAsync(u => u.DiscordId == discordId, ct);
         if (user == null)
         {
@@ -30,10 +70,9 @@ public class CharacterService : ICharacterService
         }
         else if (user.Username != username)
         {
-            user.Username = username; // Update username if it changed
+            user.Username = username;
         }
 
-        // 2. Ensure ServerConfig exists
         var server = await _dbContext.ServerConfigs.FirstOrDefaultAsync(s => s.ServerId == serverId, ct);
         if (server == null)
         {
@@ -41,53 +80,31 @@ public class CharacterService : ICharacterService
             _dbContext.ServerConfigs.Add(server);
         }
 
-        // 3. Ensure Character exists
-        var character = await _dbContext.Characters
-            .FirstOrDefaultAsync(c => c.DiscordId == discordId && c.ServerId == serverId, ct);
-
-        if (character == null)
+        var character = await _dbContext.Characters.FirstOrDefaultAsync(c => c.DiscordId == discordId && c.ServerId == serverId, ct);
+        if (character != null)
         {
-            character = new Character
-            {
-                Id = Guid.NewGuid(),
-                DiscordId = discordId,
-                ServerId = serverId,
-                BaseStats = new BaseStats { Strength = 10, Agility = 10, Luck = 5, Health = 100, Mana = 50 }
-            };
-            _dbContext.Characters.Add(character);
-            
-            // Also create an empty inventory
-            var inventory = new Inventory
-            {
-                Id = Guid.NewGuid(),
-                CharacterId = character.Id
-            };
-            _dbContext.Inventories.Add(inventory);
+            throw new DomainException("Character already exists.");
         }
 
-        // Save changes if anything was created
-        if (_dbContext.DiscordUsers.Local.Any() || _dbContext.ServerConfigs.Local.Any() || _dbContext.Characters.Local.Any())
+        character = new Character
         {
-            await _dbContext.SaveChangesAsync(ct);
-        }
-
-        // Determine Realm Title
-        var realmName = server.RealmNames.TryGetValue(character.NumericLevel, out var customName) 
-            ? customName 
-            : "Qi Condensation"; // Default MVP realm
-
-        return new CharacterProfileDto
-        {
-            DiscordId = character.DiscordId,
-            ServerId = character.ServerId,
-            Username = user.Username,
-            Level = character.NumericLevel,
-            RealmName = realmName,
-            CurrentQi = character.CurrentQi,
-            DailyQiLimit = server.DailyQiLimit,
-            SpiritStones = character.SpiritStones,
-            CurrentState = character.CurrentState
+            Id = Guid.NewGuid(),
+            DiscordId = discordId,
+            ServerId = serverId,
+            BaseStats = new BaseStats { Strength = 10, Agility = 10, Luck = 5, Health = 100, Mana = 50 }
         };
+        _dbContext.Characters.Add(character);
+        
+        var inventory = new Inventory
+        {
+            Id = Guid.NewGuid(),
+            CharacterId = character.Id
+        };
+        _dbContext.Inventories.Add(inventory);
+
+        await _dbContext.SaveChangesAsync(ct);
+
+        return (await GetProfileAsync(discordId, serverId, username, ct))!;
     }
 
     public async Task<GainQiResultDto> AddPassiveQiAsync(string discordId, string serverId, string username, CancellationToken ct = default)
@@ -98,10 +115,7 @@ public class CharacterService : ICharacterService
             
         if (character == null)
         {
-            await GetOrCreateProfileAsync(discordId, serverId, username, ct);
-            character = await _dbContext.Characters
-                .Include(c => c.ServerConfig)
-                .FirstAsync(c => c.DiscordId == discordId && c.ServerId == serverId, ct);
+            return new GainQiResultDto { Success = false, Message = "Please use /cultivate to create a character first." };
         }
 
         var serverConfig = character.ServerConfig;
@@ -185,7 +199,7 @@ public class CharacterService : ICharacterService
             return new AscendResultDto { Success = false, Message = "Character not found." };
         }
 
-        var currentConfig = _configProvider.GetLevelConfig(character.NumericLevel);
+        var currentConfig = _configProvider.GetLevelConfig(character.NumericLevel, serverId);
         if (currentConfig == null)
         {
             return new AscendResultDto { Success = false, Message = "Already at max level." };
@@ -228,7 +242,7 @@ public class CharacterService : ICharacterService
         character.CurrentQi -= currentConfig.RequiredQi;
 
         // Apply new stats
-        var nextConfig = _configProvider.GetLevelConfig(character.NumericLevel);
+        var nextConfig = _configProvider.GetLevelConfig(character.NumericLevel, serverId);
         if (nextConfig != null)
         {
             character.BaseStats.Strength = nextConfig.BaseStats.Strength;

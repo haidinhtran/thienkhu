@@ -8,31 +8,92 @@ export const handleCultivateInteraction = async (interaction: ChatInputCommandIn
   logger.info(`Handling cultivate interaction for ${interaction.user.tag}`, { traceId });
 
   if (interaction.isChatInputCommand()) {
-    // Main menu
-    const embed = embedBuilder.buildMainMenuEmbed(interaction.user.username);
+    try {
+      const discordId = interaction.user.id;
+      const serverId = interaction.guildId || 'DM';
+      const username = interaction.user.username;
 
-    const row = new ActionRowBuilder<ButtonBuilder>()
-      .addComponents(
-        new ButtonBuilder()
-          .setCustomId('cultivate_profile')
-          .setLabel('Profile')
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('cultivate_explore')
-          .setLabel('Exploration')
-          .setStyle(ButtonStyle.Success),
-        new ButtonBuilder()
-          .setCustomId('cultivate_domain')
-          .setLabel('Secret Domain')
-          .setStyle(ButtonStyle.Danger)
-      );
+      const profile = await apiClient.getCharacterProfile(discordId, serverId, username);
 
-    await interaction.editReply({ embeds: [embed], components: [row] });
+      if (!profile) {
+        const embed = embedBuilder.buildWelcomeEmbed(username);
+        const row = new ActionRowBuilder<ButtonBuilder>()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('cultivate_begin_journey')
+              .setLabel('Begin Journey')
+              .setStyle(ButtonStyle.Primary)
+          );
+        await interaction.editReply({ embeds: [embed], components: [row] });
+        return;
+      }
+
+      // Main menu
+      const embed = embedBuilder.buildMainMenuEmbed(username);
+
+      const row = new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('cultivate_profile')
+            .setLabel('Profile')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId('cultivate_explore')
+            .setLabel('Exploration')
+            .setStyle(ButtonStyle.Success),
+          new ButtonBuilder()
+            .setCustomId('cultivate_domain')
+            .setLabel('Secret Domain')
+            .setStyle(ButtonStyle.Danger),
+          new ButtonBuilder()
+            .setCustomId('cultivate_inventory')
+            .setLabel('Inventory')
+            .setStyle(ButtonStyle.Secondary)
+        );
+
+      await interaction.editReply({ embeds: [embed], components: [row] });
+    } catch (error) {
+      logger.error(`Error checking profile: ${error}`, { traceId });
+      await interaction.editReply({ content: 'An error occurred while loading the menu.', components: [] });
+    }
   } else if (interaction.isButton()) {
     const action = interaction.customId.replace('cultivate_', '');
     logger.info(`Cultivate button clicked: ${action}`, { traceId });
 
-    if (action === 'profile') {
+    if (action === 'begin_journey') {
+      try {
+        const discordId = interaction.user.id;
+        const serverId = interaction.guildId || 'DM';
+        const username = interaction.user.username;
+
+        await apiClient.createCharacter(discordId, serverId, username);
+        
+        const embed = embedBuilder.buildMainMenuEmbed(username);
+        const row = new ActionRowBuilder<ButtonBuilder>()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('cultivate_profile')
+              .setLabel('Profile')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+              .setCustomId('cultivate_explore')
+              .setLabel('Exploration')
+              .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+              .setCustomId('cultivate_domain')
+              .setLabel('Secret Domain')
+              .setStyle(ButtonStyle.Danger)
+          );
+        await interaction.editReply({ embeds: [embed], components: [row] });
+      } catch (error) {
+        logger.error(`Error creating character: ${error}`, { traceId });
+        try {
+          await interaction.editReply({ content: `Failed to begin journey: ${(error as Error).message}`, components: [] });
+        } catch (e) {
+          logger.warn(`Failed to send error message to Discord (Interaction may be expired). Trace: ${traceId}`);
+        }
+      }
+    } else if (action === 'profile') {
       try {
         const discordId = interaction.user.id;
         const serverId = interaction.guildId || 'DM';
@@ -133,6 +194,54 @@ export const handleCultivateInteraction = async (interaction: ChatInputCommandIn
         );
 
       const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+      await interaction.editReply({ embeds: [embed], components: [row] });
+    } else if (action === 'inventory') {
+      try {
+        const discordId = interaction.user.id;
+        const serverId = interaction.guildId || 'DM';
+        const username = interaction.user.username;
+
+        const inventory = await apiClient.getInventory(discordId, serverId);
+        
+        const embed = embedBuilder.buildInventoryEmbed(username, inventory);
+        
+        const row = new ActionRowBuilder<ButtonBuilder>()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('cultivate_menu')
+              .setLabel('Back to Menu')
+              .setStyle(ButtonStyle.Secondary)
+          );
+
+        await interaction.editReply({ embeds: [embed], components: [row] });
+      } catch (error) {
+        logger.error(`Error fetching inventory: ${error}`, { traceId });
+        try {
+          await interaction.editReply({ content: 'Failed to load inventory.', components: [] });
+        } catch (e) { }
+      }
+    } else if (action === 'menu') {
+      const username = interaction.user.username;
+      const embed = embedBuilder.buildMainMenuEmbed(username);
+      const row = new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('cultivate_profile')
+            .setLabel('Profile')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId('cultivate_explore')
+            .setLabel('Exploration')
+            .setStyle(ButtonStyle.Success),
+          new ButtonBuilder()
+            .setCustomId('cultivate_domain')
+            .setLabel('Secret Domain')
+            .setStyle(ButtonStyle.Danger),
+          new ButtonBuilder()
+            .setCustomId('cultivate_inventory')
+            .setLabel('Inventory')
+            .setStyle(ButtonStyle.Secondary)
+        );
       await interaction.editReply({ embeds: [embed], components: [row] });
     } else {
       await interaction.editReply({ content: `You clicked ${action}. This feature is coming soon!`, components: [] });

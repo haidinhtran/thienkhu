@@ -42,10 +42,69 @@ Based on the core documentation (`game_design_document.md`, `system_architecture
 2. **Backend - Exploration API:** Create endpoints for initiating exploration and submitting choices (e.g., `POST /api/v1/activities/explore`).
 3. **Discord Bot - Exploration UI:** Handle the `Exploration` button from the Main Menu. Provide users with location choices, display the mocked narrative in an Embed, and attach buttons for their reaction choices.
 
-## [ ] Phase 4: Progression & Secret Domains
+## [x] Phase 4: Progression & Secret Domains
 **Goal:** Enable players to ascend realms and farm specific materials.
 
-1. **Backend - Inventory Management:** Implement logic to parse and update the `JSONB` inventory structure.
-2. **Backend - Ascension Logic:** Create an endpoint `POST /api/v1/characters/ascend`. Deduct required Qi, check for breakthrough materials in the inventory, update the `numeric_level`, and increase `base_stats`.
-3. **Backend - Secret Domains:** Create fixed, challenging combat instances that grant specific loot (Breakthrough Pills, Spirit Stones, Gear).
-4. **Discord Bot - Domain & Ascension UI:** Complete the button flows for `Secret Domain` and add an `Ascend` button to the Profile view when Qi is maxed out.
+### Architecture & Data Models
+- **`IGameConfigProvider` & `InMemoryGameConfigProvider`**: Implemented an interface-driven approach for game configurations. All requirements for levels, domains, boss stats, and rewards are defined centrally and can be easily swapped for a Database-backed provider in the future.
+- **DTOs**: Added `AscendRequestDto`, `AscendResultDto`, `SecretDomainRequestDto`, and `SecretDomainResultDto` for robust data transfer.
+
+### 1. Backend - Inventory Management & Security
+- **`InventoryService`**: Created secure methods to manage the character's JSONB inventory list dynamically while letting Entity Framework Core track the changes.
+- **Security**: Utilized EF Core Optimistic Concurrency (`[Timestamp] Version`) on `Character` and `Inventory` entities to prevent race conditions and double-spending vulnerabilities during rapid button clicks.
+
+### 2. Backend - Ascension Logic (`POST /api/v1/characters/ascend`)
+- Validates if the character meets the Qi and Item requirements for their next level.
+- Safely deducts required items (e.g., Breakthrough Pills) and Qi.
+- Dynamically calculates and applies new Base Stats (Health, Strength, Agility, Luck, Mana) based on the `GameConfigProvider`.
+
+### 3. Backend - Secret Domains (`POST /api/v1/activities/secret-domain`)
+- Simulates PvE combat using player attributes vs. boss attributes with an RNG variance.
+- Grants Spirit Stones and handles variable drop rates for specific items (e.g., 50% chance for a breakthrough pill).
+- Records an `AuditLog` entry for domain victories.
+
+### 4. Discord Bot - Domain & Ascension UI
+- **Ascension Flow**: Integrated an `[Ascend (Breakthrough)]` button directly into the `[Profile]` Embed. Executing it safely calls the backend and displays a dynamic success/failure modal with the new stats.
+- **Secret Domain UI**: Added a `[Secret Domain]` button to the main menu `(/tutien)` which opens a selection menu of available domains (e.g., Goblin Cave, Azure Cloud Mountain).
+- **Embed Builders**: Updated `embedBuilder.ts` to output formatted embeds for Domain Combat Logs and Ascension outcomes.
+
+## [ ] Phase 5: System Polish, Dynamic Configuration & Core Loop Integration
+**Goal:** Transition the MVP into a production-ready state with deeper mechanics, proper onboarding, and scalable configurations.
+
+### Architecture Notes (Premium & Scale)
+- **Override/Fallback Pattern:** To support Premium servers having custom configs later, the `IGameConfigProvider` interface methods will accept `ServerId`. For this MVP, it will ignore `ServerId` and return the Global JSON config. In the future, it will check the Database first for a Premium override, then fallback to JSON.
+- **Ecosystem CMS:** As Items, Skills, and Gears multiply, a single JSON will become unmanageable. The interface-driven design (`IGameConfigProvider`) ensures that when we eventually migrate the catalog to a Database with an Admin Web Dashboard (CMS), the core game logic will remain entirely untouched.
+
+### 1. Game Configuration (JSON File Strategy)
+- `[ ]` **Backend:** Remove `InMemoryGameConfigProvider`.
+- `[ ]` **Backend:** Create `game_data.json` in `CultivationApi.WebApi` containing level thresholds, stats, and domains.
+- `[ ]` **Backend:** Refactor `IGameConfigProvider` signatures to accept `ServerId` (for future-proofing).
+- `[ ]` **Backend:** Implement `JsonGameConfigProvider` to load configuration from `game_data.json` at startup.
+
+### 2. Character Onboarding (/cultivate First Time)
+- `[ ]` **Backend:** Modify `CharactersController.cs` and `CharacterService.cs` to stop silent auto-creation on GET `/profile`. Return 404/null.
+- `[ ]` **Backend:** Add POST `/create` endpoint for creating a default "Mortal" character. (Affinity gacha is deferred to late-game items).
+- `[ ]` **Bot:** Update `cultivateController.ts` `/cultivate` flow: Check if character exists. If not, send `buildWelcomeEmbed` with `[Begin Journey]` button.
+- `[ ]` **Bot:** Handle `[Begin Journey]` button to call `createCharacter` API.
+
+### 3. Ascension Progress & Clarity UI
+- `[ ]` **Backend:** Update `CharacterProfileDto` to include `TargetQi` (required Qi for next level) and `RequiredBreakthroughItems`.
+- `[ ]` **Bot:** Update `embedBuilder.ts` (`buildProfileEmbed`) to display a visual Qi progress bar (e.g., `[▓▓▓▓░░░░░░] 45%`) using `TargetQi`.
+- `[ ]` **Bot:** List any required breakthrough materials in the Profile embed.
+
+### 4. Ecosystem Synergy (Inventory & Items)
+- `[ ]` **Backend:** Ensure `ActivitiesService.cs` (Secret Domain) rewards are correctly inserted into the `INVENTORY` JSONB column.
+- `[ ]` **Backend:** Add endpoints to view inventory and equip items: `GET /api/v1/characters/inventory`, `POST /api/v1/characters/equip`.
+- `[ ]` **Backend:** Update combat logic in Secret Domain to use effective stats: `BaseStats + EquippedGearStats`.
+- `[ ]` **Bot:** Add `[Inventory]` button to the main menu.
+- `[ ]` **Bot:** Handle inventory display and equipment selection UI.
+
+### 5. Server Owner DM Onboarding Guide
+- `[ ]` **Bot:** Create `src/events/guildCreate.ts` to listen for the bot joining a server.
+- `[ ]` **Bot:** Fetch the `guild.ownerId` and send a static DM Welcome Guide.
+- `[ ]` **Bot:** The guide will explain Chat-to-earn and note that custom configurations will be available in future updates.
+
+### 6. Documentation Updates
+- `[ ]` **Docs:** Update `user_flow.md` to reflect the new Onboarding flow and Inventory.
+- `[ ]` **Docs:** Update `system_architecture.md` to document the JSON GameConfig provider and new API endpoints.
+- `[ ]` **Docs:** Update `game_design_document.md` to explicitly list all game content and data (Realms, Domains, Items, Story mocks) to serve as the absolute single source of truth.

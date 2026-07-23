@@ -12,7 +12,7 @@ builder.Services.AddDbContext<CultivationApi.Infrastructure.Data.AppDbContext>(o
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<CultivationApi.Application.Interfaces.IAppDbContext>(provider => provider.GetRequiredService<CultivationApi.Infrastructure.Data.AppDbContext>());
-builder.Services.AddSingleton<CultivationApi.Application.Interfaces.IGameConfigProvider, CultivationApi.Application.Services.InMemoryGameConfigProvider>();
+builder.Services.AddSingleton<CultivationApi.Application.Interfaces.IGameConfigProvider, CultivationApi.Application.Services.JsonGameConfigProvider>();
 builder.Services.AddScoped<CultivationApi.Application.Interfaces.IInventoryService, CultivationApi.Application.Services.InventoryService>();
 builder.Services.AddScoped<CultivationApi.Application.Services.ICharacterService, CultivationApi.Application.Services.CharacterService>();
 builder.Services.AddScoped<CultivationApi.Application.Services.IActivitiesService, CultivationApi.Application.Services.ActivitiesService>();

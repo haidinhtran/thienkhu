@@ -11,6 +11,9 @@ export interface CharacterProfileDto {
   dailyQiLimit: number;
   spiritStones: number;
   currentState: string;
+  targetQi: number;
+  requiredBreakthroughItemId?: string;
+  requiredBreakthroughItemQuantity: number;
 }
 
 export interface ServerConfigDto {
@@ -49,6 +52,26 @@ export interface SecretDomainResultDto {
   rewardItems: RewardItemDto[];
 }
 
+export interface InventoryItemDto {
+  itemId: string;
+  quantity: number;
+  itemType: string;
+}
+
+export interface EquippedGearDto {
+  head?: string;
+  chest?: string;
+  weapon?: string;
+  artifact?: string;
+}
+
+export interface InventoryDto {
+  id: string;
+  characterId: string;
+  items: InventoryItemDto[];
+  equippedGear: EquippedGearDto;
+}
+
 export class CultivationApiClient {
   private readonly baseUrl: string;
 
@@ -57,7 +80,7 @@ export class CultivationApiClient {
     this.baseUrl = process.env.API_BASE_URL || 'http://localhost:5116/api/v1';
   }
 
-  public async getCharacterProfile(discordId: string, serverId: string, username: string): Promise<CharacterProfileDto> {
+  public async getCharacterProfile(discordId: string, serverId: string, username: string): Promise<CharacterProfileDto | null> {
     const url = new URL(`${this.baseUrl}/characters/profile`);
     url.searchParams.append('discordId', discordId);
     url.searchParams.append('serverId', serverId);
@@ -74,6 +97,10 @@ export class CultivationApiClient {
         },
       });
 
+      if (response.status === 404) {
+        return null;
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
@@ -83,6 +110,27 @@ export class CultivationApiClient {
       return data as CharacterProfileDto;
     } catch (error) {
       logger.error('Failed to fetch character profile', { error });
+      throw error;
+    }
+  }
+
+  public async createCharacter(discordId: string, serverId: string, username: string): Promise<CharacterProfileDto> {
+    const url = new URL(`${this.baseUrl}/characters/create`);
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ discordId, serverId, username })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+
+      return await response.json() as CharacterProfileDto;
+    } catch (error) {
+      logger.error('Failed to create character', { error });
       throw error;
     }
   }
@@ -107,6 +155,40 @@ export class CultivationApiClient {
       return data as ServerConfigDto;
     } catch (error) {
       logger.error('Failed to fetch server config', { error });
+      throw error;
+    }
+  }
+
+  public async getInventory(discordId: string, serverId: string): Promise<InventoryDto> {
+    const url = new URL(`${this.baseUrl}/inventory`);
+    url.searchParams.append('discordId', discordId);
+    url.searchParams.append('serverId', serverId);
+    try {
+      const response = await fetch(url.toString(), {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (!response.ok) throw new Error(`API Error: ${response.status}`);
+      return await response.json() as InventoryDto;
+    } catch (error) {
+      logger.error('Failed to get inventory', { error });
+      throw error;
+    }
+  }
+
+  public async equipItem(discordId: string, serverId: string, itemId: string, slot: string): Promise<boolean> {
+    const url = new URL(`${this.baseUrl}/inventory/equip`);
+    url.searchParams.append('discordId', discordId);
+    url.searchParams.append('serverId', serverId);
+    url.searchParams.append('itemId', itemId);
+    url.searchParams.append('slot', slot);
+    try {
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+      });
+      return response.ok;
+    } catch (error) {
+      logger.error('Failed to equip item', { error });
       throw error;
     }
   }

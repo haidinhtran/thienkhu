@@ -82,6 +82,20 @@ Retrieves the character profile for a user. If the character, server config, or 
   }
   ```
 
+**POST `/api/v1/characters/create`**
+Creates a new character profile.
+
+- **Request Body:**
+  ```json
+  {
+    "discordId": "string",
+    "serverId": "string",
+    "username": "string"
+  }
+  ```
+- **Response (`200 OK`):**
+  Same as `GET /api/v1/characters/profile`
+
 **POST `/api/v1/characters/gain-qi`**
 Grants passive Qi to a character based on server configuration limits and cooldowns.
 
@@ -141,6 +155,49 @@ Retrieves the server's configuration, including chat-to-earn settings. Auto-crea
     "serverId": "string",
     "chatToEarnChannels": ["string"],
     "isActive": true
+  }
+  ```
+
+### Inventory API
+
+**GET `/api/v1/inventory`**
+Retrieves the user's inventory and equipped gear.
+
+- **Query Parameters:**
+  - `discordId` (string, required)
+  - `serverId` (string, required)
+- **Response (`200 OK`):**
+  ```json
+  {
+    "id": "string",
+    "characterId": "string",
+    "items": [
+      {
+        "itemId": "string",
+        "quantity": "int",
+        "itemType": "string"
+      }
+    ],
+    "equippedGear": {
+      "weaponId": "string",
+      "armorId": "string",
+      "accessoryId": "string"
+    }
+  }
+  ```
+
+**POST `/api/v1/inventory/equip`**
+Equips an item to a specific slot (Weapon, Armor, Accessory).
+
+- **Query Parameters:**
+  - `discordId` (string, required)
+  - `serverId` (string, required)
+  - `itemId` (string, required)
+  - `slot` (string, required)
+- **Response (`200 OK`):**
+  ```json
+  {
+    "success": true
   }
   ```
 
