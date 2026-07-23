@@ -35,6 +35,9 @@ public class ServersController : ControllerBase
         {
             ServerId = config.ServerId,
             ChatToEarnChannels = config.ChatToEarnChannels,
+            MinQiPerMessage = config.MinQiPerMessage,
+            MaxQiPerMessage = config.MaxQiPerMessage,
+            InsightMultiplier = config.InsightMultiplier,
             IsActive = config.IsActive
         });
     }

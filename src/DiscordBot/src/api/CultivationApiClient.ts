@@ -27,12 +27,16 @@ export interface CharacterProfileDto {
     luck: number;
     health: number;
     mana: number;
+    insight: number;
   };
 }
 
 export interface ServerConfigDto {
   serverId: string;
   chatToEarnChannels: string[];
+  minQiPerMessage: number;
+  maxQiPerMessage: number;
+  insightMultiplier: number;
   isActive: boolean;
 }
 

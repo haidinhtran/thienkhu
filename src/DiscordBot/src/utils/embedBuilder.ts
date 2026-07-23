@@ -46,7 +46,8 @@ export const embedBuilder = {
         { name: 'Agility', value: `${profile.baseStats.agility}`, inline: true },
         { name: 'Health', value: `${profile.baseStats.health}`, inline: true },
         { name: 'Mana', value: `${profile.baseStats.mana}`, inline: true },
-        { name: 'Luck', value: `${profile.baseStats.luck}`, inline: true }
+        { name: 'Luck', value: `${profile.baseStats.luck}`, inline: true },
+        { name: 'Insight', value: `${profile.baseStats.insight ?? 10}`, inline: true }
       );
     }
 
@@ -106,7 +107,8 @@ export const embedBuilder = {
         { name: 'Level Up', value: `Lv. ${resultData.oldLevel} -> Lv. ${resultData.newLevel}`, inline: false },
         { name: 'Strength', value: `${resultData.newBaseStats.strength}`, inline: true },
         { name: 'Agility', value: `${resultData.newBaseStats.agility}`, inline: true },
-        { name: 'Health', value: `${resultData.newBaseStats.health}`, inline: true }
+        { name: 'Health', value: `${resultData.newBaseStats.health}`, inline: true },
+        { name: 'Insight', value: `${resultData.newBaseStats.insight ?? 10}`, inline: true }
       );
     }
     return embed;

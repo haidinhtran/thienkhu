@@ -16,6 +16,7 @@ public class BaseStatsConfig
     public int Luck { get; set; }
     public int Health { get; set; }
     public int Mana { get; set; }
+    public int Insight { get; set; } = 10;
 }
 
 public class SecretDomainConfig

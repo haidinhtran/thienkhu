@@ -12,6 +12,7 @@ public class CharacterService : ICharacterService
 {
     private readonly IAppDbContext _dbContext;
     private readonly IGameConfigProvider _configProvider;
+    private readonly Random _random = new();
 
     public CharacterService(IAppDbContext dbContext, IGameConfigProvider configProvider)
     {
@@ -41,7 +42,8 @@ public class CharacterService : ICharacterService
             ? customName 
             : "Qi Condensation";
 
-        var levelConfig = _configProvider.GetLevelConfig(character.NumericLevel, serverId);
+        var currentConfig = _configProvider.GetLevelConfig(character.NumericLevel, serverId);
+        long targetQi = currentConfig?.RequiredQi ?? 0;
 
         return new CharacterProfileDto
         {
@@ -54,9 +56,9 @@ public class CharacterService : ICharacterService
             DailyQiLimit = character.ServerConfig?.DailyQiLimit ?? 1000,
             SpiritStones = character.SpiritStones,
             CurrentState = character.CurrentState,
-            TargetQi = levelConfig?.RequiredQi ?? 0,
-            RequiredBreakthroughItemId = levelConfig?.RequiredBreakthroughItemId,
-            RequiredBreakthroughItemQuantity = levelConfig?.RequiredBreakthroughItemQuantity ?? 0,
+            TargetQi = targetQi,
+            RequiredBreakthroughItemId = currentConfig?.RequiredBreakthroughItemId,
+            RequiredBreakthroughItemQuantity = currentConfig?.RequiredBreakthroughItemQuantity ?? 0,
             BaseStats = character.BaseStats
         };
     }
@@ -66,12 +68,13 @@ public class CharacterService : ICharacterService
         var user = await _dbContext.DiscordUsers.FirstOrDefaultAsync(u => u.DiscordId == discordId, ct);
         if (user == null)
         {
-            user = new DiscordUser { DiscordId = discordId, Username = username, CreatedAt = DateTime.UtcNow };
+            user = new DiscordUser
+            {
+                DiscordId = discordId,
+                Username = username,
+                CreatedAt = DateTime.UtcNow
+            };
             _dbContext.DiscordUsers.Add(user);
-        }
-        else if (user.Username != username)
-        {
-            user.Username = username;
         }
 
         var server = await _dbContext.ServerConfigs.FirstOrDefaultAsync(s => s.ServerId == serverId, ct);
@@ -87,12 +90,25 @@ public class CharacterService : ICharacterService
             throw new DomainException("Character already exists.");
         }
 
+        var level1Config = _configProvider.GetLevelConfig(1, serverId);
+        var baseStats = level1Config != null
+            ? new BaseStats 
+              { 
+                  Strength = level1Config.BaseStats.Strength, 
+                  Agility = level1Config.BaseStats.Agility, 
+                  Luck = level1Config.BaseStats.Luck, 
+                  Health = level1Config.BaseStats.Health, 
+                  Mana = level1Config.BaseStats.Mana, 
+                  Insight = level1Config.BaseStats.Insight 
+              }
+            : new BaseStats { Strength = 15, Agility = 15, Luck = 7, Health = 150, Mana = 70, Insight = 10 };
+
         character = new Character
         {
             Id = Guid.NewGuid(),
             DiscordId = discordId,
             ServerId = serverId,
-            BaseStats = new BaseStats { Strength = 10, Agility = 10, Luck = 5, Health = 100, Mana = 50 }
+            BaseStats = baseStats
         };
         _dbContext.Characters.Add(character);
         
@@ -151,7 +167,16 @@ public class CharacterService : ICharacterService
             };
         }
 
-        long qiToAdd = serverConfig.QiPerMessage;
+        int insight = character.BaseStats.Insight > 0 ? character.BaseStats.Insight : 10;
+        int minQi = serverConfig.MinQiPerMessage;
+        int upperLimit = minQi + (int)(insight * serverConfig.InsightMultiplier);
+        int maxAllowed = Math.Min(upperLimit, serverConfig.MaxQiPerMessage);
+        if (maxAllowed < minQi)
+        {
+            maxAllowed = minQi;
+        }
+
+        long qiToAdd = _random.Next(minQi, maxAllowed + 1);
         if (character.DailyQiAccumulated + qiToAdd > serverConfig.DailyQiLimit)
         {
             qiToAdd = serverConfig.DailyQiLimit - character.DailyQiAccumulated;
@@ -251,6 +276,7 @@ public class CharacterService : ICharacterService
             character.BaseStats.Luck = nextConfig.BaseStats.Luck;
             character.BaseStats.Health = nextConfig.BaseStats.Health;
             character.BaseStats.Mana = nextConfig.BaseStats.Mana;
+            character.BaseStats.Insight = nextConfig.BaseStats.Insight;
         }
 
         var auditLog = new AuditLog

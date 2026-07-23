@@ -26,7 +26,7 @@ erDiagram
         bigint current_qi "Current experience points"
         bigint daily_qi_accumulated "Reset daily to enforce Cap"
         int spirit_stones "Primary game currency"
-        jsonb base_stats "JSONB: {strength, agility, luck, health, mana}"
+        jsonb base_stats "JSONB: {strength, agility, luck, health, mana, insight}"
         timestamp last_meditated "Cooldown tracking"
         int version "Row version for Concurrency Control"
     }
@@ -43,7 +43,9 @@ erDiagram
         jsonb realm_names "JSONB: Level to Title Mapping"
         int daily_qi_limit "Customizable daily cap for Chat-to-Earn"
         jsonb chat_to_earn_channels "JSONB: List of allowed channel IDs"
-        int qi_per_message "Amount of Qi granted per message"
+        int min_qi_per_message "Minimum Qi granted per message"
+        int max_qi_per_message "Maximum Qi cap granted per message"
+        double insight_multiplier "Multiplier for Insight influence on Qi gain"
         int message_cooldown_seconds "Cooldown between eligible messages"
         boolean is_active
     }

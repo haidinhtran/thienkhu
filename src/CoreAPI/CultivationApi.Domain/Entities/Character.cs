@@ -31,4 +31,5 @@ public class BaseStats
     public int Luck { get; set; }
     public int Health { get; set; }
     public int Mana { get; set; }
+    public int Insight { get; set; } = 10;
 }
